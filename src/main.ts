@@ -1,15 +1,11 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule, ObserveInstrument } from './app.module.js';
-
-import 'dotenv/config';
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { AppModule } from './app.module.js';
+import { env } from './config/env.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    instrument: ObserveInstrument,
-  });
-  await app.listen(process.env.PORT ?? 3000);
-}
-await bootstrap();
+  const app = await NestFactory.create(AppModule);
 
-const db = drizzle(process.env.DATABASE_URL!);
+  await app.listen(env.PORT);
+}
+
+await bootstrap();

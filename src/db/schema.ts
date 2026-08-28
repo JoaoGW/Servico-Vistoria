@@ -1,5 +1,5 @@
 import {
-    boolean,
+  boolean,
   doublePrecision,
   pgTable,
   text,
@@ -8,6 +8,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
+// Para a tabela de usuários
 export const usuarios = pgTable("usuarios", {
   id: uuid("id").defaultRandom().primaryKey(), // ID do usuário
   email: varchar("email", { length: 255 }).notNull().unique(), // Email do usuário
@@ -27,6 +28,7 @@ export const usuarios = pgTable("usuarios", {
     .$onUpdate(() => new Date()),
 });
 
+// Para a tabela de vistorias
 export const vistorias = pgTable("vistorias", {
   // UUID também pode ser gerado no mobile antes da sincronização.
   id: uuid("id").defaultRandom().primaryKey(), // ID da Vistoria
@@ -53,6 +55,7 @@ export const vistorias = pgTable("vistorias", {
     .$onUpdate(() => new Date()),
 });
 
+// Para a tabela de Documentos
 export const documents = pgTable("documentos", {
   id: uuid("id").defaultRandom().primaryKey(), // ID do Documento
   title: varchar("titulo_doc", { length: 255 }).notNull(), // Título do Documento
