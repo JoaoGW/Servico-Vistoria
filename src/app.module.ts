@@ -1,4 +1,8 @@
+// src/app.module.ts
 import { Module } from '@nestjs/common';
+import { VistoriasModule } from './modules/vistorias/vistorias.module.js';
 
-@Module({})
+@Module({
+  imports: [VistoriasModule],
+})
 export class AppModule {}
