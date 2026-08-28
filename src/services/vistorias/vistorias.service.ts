@@ -1,4 +1,3 @@
-// src/vistorias/vistorias.service.ts
 import { Injectable } from '@nestjs/common';
 import { db } from '../../db/index.js';
 import { vistorias } from '../../db/schema.js';

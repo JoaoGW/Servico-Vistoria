@@ -1,10 +1,10 @@
-// src/vistorias/vistorias.controller.ts
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import * as vistoriasService_1 from './vistorias.service.js';
+import { VistoriasService } from '../../services/vistorias/vistorias.service.js';
+import type { CreateVistoriaDto } from '../../services/vistorias/vistorias.service.js';
 
 @Controller('vistorias')
 export class VistoriasController {
-  constructor(private readonly vistoriasService: vistoriasService_1.VistoriasService) {}
+  constructor(private readonly vistoriasService: VistoriasService) {}
 
   @Get()
   findAll() {
@@ -12,7 +12,7 @@ export class VistoriasController {
   }
 
   @Post()
-  create(@Body() body: vistoriasService_1.CreateVistoriaDto) {
+  create(@Body() body: CreateVistoriaDto) {
     return this.vistoriasService.create(body);
   }
 }

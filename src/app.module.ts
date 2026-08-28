@@ -1,4 +1,3 @@
-// src/app.module.ts
 import { Module } from '@nestjs/common';
 import { VistoriasModule } from './modules/vistorias/vistorias.module.js';
 
