@@ -1,0 +1,5 @@
+$kind: http-request
+name: Cadastrar Usuário
+url: ""
+method: GET
+order: 1958909696955473
