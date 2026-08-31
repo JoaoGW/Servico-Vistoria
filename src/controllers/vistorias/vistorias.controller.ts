@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { VistoriasService } from '../../services/vistorias/vistorias.service.js';
 import type { CreateVistoriaDto } from '../../services/vistorias/vistorias.service.js';
 
@@ -14,5 +14,10 @@ export class VistoriasController {
   @Post()
   create(@Body() body: CreateVistoriaDto) {
     return this.vistoriasService.create(body);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.vistoriasService.remove(id);
   }
 }

@@ -39,4 +39,13 @@ export class DocumentosService {
 
     return documento;
   }
+
+  async remove(id: string) {
+    const [documento] = await db
+      .delete(documents)
+      .where(eq(documents.id, id))
+      .returning();
+
+    return documento;
+  }
 }

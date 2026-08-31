@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { DocumentosService } from '../../services/documentos/documentos.service.js';
 import type {
   CreateDocumentoDto,
@@ -22,5 +22,10 @@ export class DocumentosController {
   @Put()
   update(@Body() body: UpdateDocumentoDto) {
     return this.documentosService.update(body);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.documentosService.remove(id);
   }
 }
