@@ -11,6 +11,11 @@ cp .env.example .env.local
 ```
 
 Preencha `DATABASE_URL` com a conexão do seu PostgreSQL local.
+Defina também um segredo seguro para a assinatura dos tokens JWT:
+
+```env
+JWT_SECRET=gere-um-segredo-com-pelo-menos-32-caracteres
+```
 
 ## Desenvolvimento
 
@@ -38,6 +43,16 @@ Use `GET /vistorias/:id/foto` para visualizá-la.
 Documentos recebem um arquivo PDF ou DOCX no campo `file`, também em
 `multipart/form-data`. Use `GET /documentos/:id/arquivo` para baixá-lo.
 As listagens retornam apenas os metadados dos arquivos, não o conteúdo binário.
+
+## Autenticação
+
+Cadastro (`POST /usuarios`) e login (`POST /usuarios/login`) são públicos. O
+login retorna um `accessToken` JWT válido por uma hora. Todas as outras rotas
+exigem o cabeçalho:
+
+```http
+Authorization: Bearer <accessToken>
+```
 
 ## Verificações
 

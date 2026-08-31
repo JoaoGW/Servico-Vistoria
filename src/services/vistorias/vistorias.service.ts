@@ -42,7 +42,17 @@ export class VistoriasService {
         photo: photo.buffer,
         photoMimeType: photo.mimetype,
       })
-      .returning();
+      .returning({
+        id: vistorias.id,
+        userId: vistorias.userId,
+        description: vistorias.description,
+        photoMimeType: vistorias.photoMimeType,
+        latitude: vistorias.latitude,
+        longitude: vistorias.longitude,
+        pendente: vistorias.pendente,
+        createdAt: vistorias.createdAt,
+        updatedAt: vistorias.updatedAt,
+      });
 
     return vistoria;
   }

@@ -43,7 +43,14 @@ export class DocumentosService {
         fileMimeType: file.mimetype,
         fileName: file.originalname,
       })
-      .returning();
+      .returning({
+        id: documents.id,
+        title: documents.title,
+        fileMimeType: documents.fileMimeType,
+        fileName: documents.fileName,
+        createdAt: documents.createdAt,
+        updatedAt: documents.updatedAt,
+      });
 
     return documento;
   }
@@ -60,7 +67,14 @@ export class DocumentosService {
         }),
       })
       .where(eq(documents.id, id))
-      .returning();
+      .returning({
+        id: documents.id,
+        title: documents.title,
+        fileMimeType: documents.fileMimeType,
+        fileName: documents.fileName,
+        createdAt: documents.createdAt,
+        updatedAt: documents.updatedAt,
+      });
 
     return documento;
   }
