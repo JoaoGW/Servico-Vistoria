@@ -1,5 +1,6 @@
 import {
   boolean,
+  bytea,
   doublePrecision,
   pgTable,
   text,
@@ -36,7 +37,8 @@ export const vistorias = pgTable("vistorias", {
     .notNull()
     .references(() => usuarios.id),
   description: text("descricao").notNull(), // Descrição da vistoria
-  photoUrl: text("url_foto").notNull(), // URL para a foto da vistoria concluída
+  photo: bytea("foto").notNull(), // Imagem da vistoria
+  photoMimeType: varchar("foto_mime_type", { length: 127 }).notNull(),
   latitude: doublePrecision("latitude").notNull(), // Latitude para verificar o local da vistoria
   longitude: doublePrecision("longitude").notNull(), // Longitude para verificar o local da vistoria
   pendente: boolean("pendente").notNull(), // Mostra se aquela vistoria já terminou ou ainda está pendente
@@ -59,7 +61,9 @@ export const vistorias = pgTable("vistorias", {
 export const documents = pgTable("documentos", {
   id: uuid("id").defaultRandom().primaryKey(), // ID do Documento
   title: varchar("titulo_doc", { length: 255 }).notNull(), // Título do Documento
-  fileUrl: text("url_arquivo").notNull(), // URL para o Documento
+  file: bytea("arquivo").notNull(), // Conteúdo do documento (PDF ou DOCX)
+  fileMimeType: varchar("arquivo_mime_type", { length: 127 }).notNull(),
+  fileName: varchar("nome_arquivo", { length: 255 }).notNull(),
   createdAt: timestamp("criacao", { // Data de criação do documento
     withTimezone: true,
     mode: "date",
