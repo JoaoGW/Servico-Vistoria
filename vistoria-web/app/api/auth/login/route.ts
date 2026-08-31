@@ -1,12 +1,20 @@
 import { NextRequest } from "next/server"
 
-// Autenticar um usuário
 export async function POST(request: NextRequest) {
     try {
         if (request.method !== "POST") {
             return Response.json(
                 { error: "O método " + request.method + " na requisição não é um método válido" },
                 { status: 405 },
+            )
+        }
+
+        const { email, senha } = await request.json()
+
+        if (!email || !senha) {
+            return Response.json(
+                { error: "Não foram disponibilizados e-mail e senha no envio da requisição" },
+                { status: 400 },
             )
         }
 
@@ -17,12 +25,16 @@ export async function POST(request: NextRequest) {
 
         const apiUrl = process.env.APIS_URL + "/usuarios/login"
 
-        const response = await fetch(apiUrl, { headers })
+        const response = await fetch(apiUrl, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ email, senha }),
+        })
 
         if (!response.ok) {
             return Response.json(
                 {
-                    error: "Erro no processo de response da API - Cadastro de Usuário",
+                    error: "Erro no processo de response da API - Login de Usuário",
                 },
                 { status: response.status },
             )
@@ -33,7 +45,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         return Response.json(
             {
-                error: "Erro encontrado na API - Cadastro de Usuário: " + error,
+                error: "Erro encontrado na API - Login de Usuário: " + error,
             },
             { status: 500 },
         )
