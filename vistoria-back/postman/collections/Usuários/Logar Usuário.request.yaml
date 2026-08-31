@@ -1,0 +1,5 @@
+$kind: http-request
+name: Logar Usuário
+url: ""
+method: GET
+order: 1788182630588

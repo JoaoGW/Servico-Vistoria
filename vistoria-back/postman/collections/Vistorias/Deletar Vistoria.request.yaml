@@ -1,0 +1,5 @@
+$kind: http-request
+name: Deletar Vistoria
+url: ""
+method: GET
+order: 3818851092252576

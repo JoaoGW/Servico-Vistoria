@@ -1,0 +1,4 @@
+name: Ambiente
+values:
+  - key: localhost
+    value: 'http://localhost:3000'
