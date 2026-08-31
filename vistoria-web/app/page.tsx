@@ -169,7 +169,8 @@ export default function Login() {
               </div>
 
               <button
-                className="flex h-12 w-full items-center justify-center rounded-lg bg-[#1E274A] px-5 text-base font-bold text-white transition-colors hover:bg-[#151C36] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] active:bg-[#11172C] disabled:cursor-not-allowed disabled:bg-[#AEBBD2]"
+                className="flex h-12 w-full items-center justify-center rounded-lg bg-[#1E274A] px-5 text-base font-bold text-white transition-colors hover:bg-[#151C36] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] active:bg-[#11172C] disabled:cursor-not-allowed disabled:bg-[#AEBBD2] hover:cursor-pointer"
+                disabled={!email || !senha}
                 type="submit"
               >
                 Entrar

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
         const response = await fetch(apiUrl, {
             method: "POST",
             headers,
-            body: JSON.stringify({ email, senha }),
+            body: JSON.stringify({ email, password: senha }),
         })
 
         if (!response.ok) {
