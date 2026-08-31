@@ -1,0 +1,5 @@
+$kind: http-request
+name: Visualizar Foto de Vistoria Específica
+url: ""
+method: GET
+order: 4102627540989445
