@@ -1,68 +1,187 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState } from 'react';
+
+import { useRouter } from 'next/navigation';
+
+interface Autenticacao {
+  email: string,
+  senha: string
+}
+
+/**
+ * Descreva o method
+ *
+ * @param xxx - Descreva todos os parâmetros
+ * @returns Descreva o retorno
+ * @throws Will throw an error if the request fails or the response is not successful.
+ *
+ * @remarks
+ * - Ensure that the API endpoint is accessible.
+ * - If the response status is 429, then xxx
+ * - Logs relevant information to the console in case of errors or specific response statuses.
+ */
+export const login = async ({ email, senha }: Autenticacao) => {
+  try {
+    const response = await fetch(`/loginUsuario`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, senha }),
+    });
+
+    if (!response.ok) {
+      if(response?.status === 429){
+        console.log("Muitas requisições enviadas esgotaram o limite do servidor");
+      }
+      console.log("Respoonse de login: ", response);
+      throw new Error('Falha ao fazer login');
+    }
+
+    const data = await response.json();
+
+    return data.message;
+  } catch (error) {
+    console.error('O seguinte erro foi encontrado ao tentar fazer login: ', error);
+    throw error;
+  }
+}
+
+export default function Login() {
+  const [email, setEmail] = useState<Autenticacao["email"]>("")
+  const [senha, setSenha] = useState<Autenticacao["senha"]>("")
+
+  // Instanciação de encaminhamento para outras telas
+  const router = useRouter()
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <div className="min-h-dvh bg-[#F2F4F8] text-[#11181C] lg:grid lg:grid-cols-[minmax(21rem,0.88fr)_minmax(32rem,1.12fr)]">
+      <aside className="hidden bg-[#1E274A] px-10 py-12 text-[#ECEDEE] lg:flex lg:flex-col xl:px-16">
+        <div className="flex items-center gap-3">
+          <svg
+            aria-hidden="true"
+            className="h-11 w-11 shrink-0"
+            fill="none"
+            viewBox="0 0 44 44"
+          >
+            <rect x="5" y="4" width="24" height="32" rx="3" stroke="#69B3FF" strokeWidth="2.5" />
+            <path d="M11 12h12M11 18h12M11 24h7" stroke="#69B3FF" strokeLinecap="round" strokeWidth="2.5" />
+            <circle cx="30.5" cy="30.5" r="7" fill="#1E274A" stroke="#69B3FF" strokeWidth="2.5" />
+            <path d="m35.5 35.5 4 4" stroke="#69B3FF" strokeLinecap="round" strokeWidth="2.5" />
+          </svg>
+          <div className="leading-none">
+            <p className="text-xl font-bold tracking-tight">Peacore</p>
+            <p className="mt-1 text-xs font-semibold tracking-[0.16em] text-[#69B3FF]">VISTORIAS</p>
+          </div>
+        </div>
+
+        <div className="my-auto max-w-sm border-l border-[#69B3FF] pl-6">
+          <p className="text-sm font-semibold text-[#A9CCFF]">ACESSO RESTRITO</p>
+          <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-white">
+            Gestão de vistorias com informações claras.
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-5 text-base leading-7 text-[#C6D0E5]">
+            Acesse a plataforma para acompanhar ordens de serviço, pendências e a operação da sua filial.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="border-t border-white/15 pt-6 text-sm leading-6 text-[#AEBBD2]">
+          <p>Ambiente seguro para usuários autorizados.</p>
+          <p className="mt-1">Peacore Vistorias</p>
         </div>
+      </aside>
+
+      <main className="flex min-h-dvh flex-col bg-white">
+        <header className="flex items-center border-b border-[#DDE3ED] px-6 py-5 sm:px-10 lg:hidden">
+          <svg
+            aria-hidden="true"
+            className="h-9 w-9 shrink-0"
+            fill="none"
+            viewBox="0 0 44 44"
+          >
+            <rect x="5" y="4" width="24" height="32" rx="3" stroke="#1E5BA8" strokeWidth="2.5" />
+            <path d="M11 12h12M11 18h12M11 24h7" stroke="#1E5BA8" strokeLinecap="round" strokeWidth="2.5" />
+            <circle cx="30.5" cy="30.5" r="7" fill="white" stroke="#1E5BA8" strokeWidth="2.5" />
+            <path d="m35.5 35.5 4 4" stroke="#1E5BA8" strokeLinecap="round" strokeWidth="2.5" />
+          </svg>
+          <div className="ml-3 leading-none">
+            <p className="text-lg font-bold tracking-tight text-[#1E274A]">Peacore</p>
+            <p className="mt-1 text-[11px] font-semibold tracking-[0.16em] text-[#1E5BA8]">VISTORIAS</p>
+          </div>
+        </header>
+
+        <section className="flex flex-1 items-center px-6 py-12 sm:px-10 lg:px-16 xl:px-24">
+          <div className="mx-auto w-full max-w-md">
+            <div className="border-b border-[#DDE3ED] pb-6">
+              <p className="text-sm font-semibold text-[#1E5BA8]">PORTAL DE ACESSO</p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#1E274A]">Entre na sua conta</h2>
+              <p className="mt-3 text-base leading-6 text-[#687076]">
+                Informe suas credenciais para continuar na plataforma Peacore Vistorias.
+              </p>
+            </div>
+
+            <form
+              className="mt-8 space-y-6"
+              onSubmit={async (event) => {
+                event.preventDefault()
+
+                try {
+                  await login({ email, senha })
+                  router.push('/dashboard')
+                } catch {
+                  return
+                }
+              }}
+            >
+              <div>
+                <label className="block text-sm font-semibold text-[#1E274A]" htmlFor="email">
+                  E-mail
+                </label>
+                <input
+                  autoComplete="email"
+                  className="mt-2 h-12 w-full rounded-lg border border-[#BCC7D8] bg-white px-3 text-base text-[#11181C] outline-none transition-colors placeholder:text-[#687076] focus:border-[#1E5BA8] focus:ring-2 focus:ring-[#1E5BA8]/20"
+                  id="email"
+                  name="email"
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="nome@empresa.com.br"
+                  required
+                  type="email"
+                  value={email}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[#1E274A]" htmlFor="senha">
+                  Senha
+                </label>
+                <input
+                  autoComplete="current-password"
+                  className="mt-2 h-12 w-full rounded-lg border border-[#BCC7D8] bg-white px-3 text-base text-[#11181C] outline-none transition-colors placeholder:text-[#687076] focus:border-[#1E5BA8] focus:ring-2 focus:ring-[#1E5BA8]/20"
+                  id="senha"
+                  name="senha"
+                  onChange={(event) => setSenha(event.target.value)}
+                  placeholder="Digite sua senha"
+                  required
+                  type="password"
+                  value={senha}
+                />
+              </div>
+
+              <button
+                className="flex h-12 w-full items-center justify-center rounded-lg bg-[#1E274A] px-5 text-base font-bold text-white transition-colors hover:bg-[#151C36] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] active:bg-[#11172C] disabled:cursor-not-allowed disabled:bg-[#AEBBD2]"
+                disabled={!email || !senha}
+                type="submit"
+              >
+                Entrar
+              </button>
+            </form>
+
+            <p className="mt-8 border-t border-[#DDE3ED] pt-5 text-sm leading-6 text-[#687076]">
+              Não compartilhe suas credenciais. Em caso de dificuldade de acesso, procure o administrador da sua filial.
+            </p>
+          </div>
+        </section>
       </main>
     </div>
   );
