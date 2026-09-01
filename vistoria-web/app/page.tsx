@@ -7,21 +7,18 @@ import ErrorLoginModal from '@/components/Modals/ErrorLoginModal';
 
 interface Autenticacao {
   email: string,
-  senha: string,
-  setModalErro: (ativo: boolean) => void
+  senha: string
 }
 
 /**
- * Responsável por fazer a chamada ao route e conectar a rota de API para realizar a autenticação do usuário ao portal
+ * Responsável por chamar a rota de autenticação do portal.
  *
- * @param email - O email o qual o usuário está usando para fazer login
- * @param senha - A senha a qual o usuário está usando para fazer login
- * @param setModalErro - Switcher de ativação do Modal para quando der erro no login
- * @returns Será o retorno da API com as informações definidas
+ * @param email - E-mail informado pelo usuário.
+ * @param senha - Senha informada pelo usuário.
+ * @returns Retorna o token de acesso disponibilizado pela API.
  * @throws Will throw an error if the request fails or the response is not successful.
- *
  */
-export const login = async ({ email, senha, setModalErro }: Autenticacao) => {
+export const login = async ({ email, senha }: Autenticacao) => {
   try {
     const response = await fetch(`/api/auth/login`, {
       method: 'POST',
@@ -36,12 +33,12 @@ export const login = async ({ email, senha, setModalErro }: Autenticacao) => {
         console.log("Muitas requisições enviadas esgotaram o limite do servidor");
       }
       console.log("Respoonse de login: ", response);
-      setModalErro(true)
+      throw new Error('Falha ao fazer login');
     }
 
     const data = await response.json();
 
-    return data.message;
+    return data;
   } catch (error) {
     console.error('O seguinte erro foi encontrado ao tentar fazer login: ', error);
     throw error;
@@ -128,10 +125,11 @@ export default function Login() {
                 event.preventDefault()
 
                 try {
-                  await login({ email, senha, setModalErro })
+                  const data = await login({ email, senha })
+                  sessionStorage.setItem('accessToken', data.accessToken)
                   router.push('/dashboard')
                 } catch {
-                  return
+                  setModalErro(true)
                 }
               }}
             >
