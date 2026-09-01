@@ -1,27 +1,27 @@
 'use client'
-
 import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import ErrorLoginModal from '@/components/Modals/ErrorLoginModal';
+
 interface Autenticacao {
   email: string,
-  senha: string
+  senha: string,
+  setModalErro: (ativo: boolean) => void
 }
 
 /**
- * Descreva o method
+ * Responsável por fazer a chamada ao route e conectar a rota de API para realizar a autenticação do usuário ao portal
  *
- * @param xxx - Descreva todos os parâmetros
- * @returns Descreva o retorno
+ * @param email - O email o qual o usuário está usando para fazer login
+ * @param senha - A senha a qual o usuário está usando para fazer login
+ * @param setModalErro - Switcher de ativação do Modal para quando der erro no login
+ * @returns Será o retorno da API com as informações definidas
  * @throws Will throw an error if the request fails or the response is not successful.
  *
- * @remarks
- * - Ensure that the API endpoint is accessible.
- * - If the response status is 429, then xxx
- * - Logs relevant information to the console in case of errors or specific response statuses.
  */
-export const login = async ({ email, senha }: Autenticacao) => {
+export const login = async ({ email, senha, setModalErro }: Autenticacao) => {
   try {
     const response = await fetch(`/api/auth/login`, {
       method: 'POST',
@@ -36,7 +36,7 @@ export const login = async ({ email, senha }: Autenticacao) => {
         console.log("Muitas requisições enviadas esgotaram o limite do servidor");
       }
       console.log("Respoonse de login: ", response);
-      throw new Error('Falha ao fazer login');
+      setModalErro(true)
     }
 
     const data = await response.json();
@@ -51,6 +51,7 @@ export const login = async ({ email, senha }: Autenticacao) => {
 export default function Login() {
   const [email, setEmail] = useState<Autenticacao["email"]>("")
   const [senha, setSenha] = useState<Autenticacao["senha"]>("")
+  const [modalErro, setModalErro] = useState<boolean>(false)
 
   // Instanciação de encaminhamento para outras telas
   const router = useRouter()
@@ -127,7 +128,7 @@ export default function Login() {
                 event.preventDefault()
 
                 try {
-                  await login({ email, senha })
+                  await login({ email, senha, setModalErro })
                   router.push('/dashboard')
                 } catch {
                   return
@@ -182,6 +183,8 @@ export default function Login() {
             </p>
           </div>
         </section>
+
+        {modalErro ? <ErrorLoginModal onClose={() => setModalErro(false)} errTitle="Erro ao Fazer Login" errMessage='Não foi possível fazer login. Confire seus dados inseridos e se ainda não tiver um cadastro, cadastre-se!' /> : null}
       </main>
     </div>
   );

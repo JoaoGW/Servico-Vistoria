@@ -69,10 +69,6 @@ export async function GET(request: NextRequest) {
  * @returns Descreva o retorno
  * @throws Will throw an error if the request fails or the response is not successful.
  *
- * @remarks
- * - Ensure that the API endpoint is accessible.
- * - If the response status is 429, then xxx
- * - Logs relevant information to the console in case of errors or specific response statuses.
  */
 export const generateItinerary = async (prompt: string) => {
   try {
