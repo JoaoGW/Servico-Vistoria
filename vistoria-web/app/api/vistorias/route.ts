@@ -16,7 +16,46 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        const userId = crypto.randomUUID()
+        const authorization = request.headers.get("Authorization")
+
+        if (!authorization?.startsWith("Bearer ")) {
+            return Response.json(
+                { error: "Token Bearer não informado" },
+                { status: 401 },
+            )
+        }
+
+        const token = authorization.replace("Bearer ", "")
+        const payload = token.split(".")[1]
+
+        if (!payload) {
+            return Response.json(
+                { error: "Token Bearer inválido" },
+                { status: 401 },
+            )
+        }
+
+        let userId: string | undefined
+
+        try {
+            const data: { sub?: string } = JSON.parse(Buffer.from(payload, "base64url").toString())
+            if (typeof data.sub === "string") {
+                userId = data.sub
+            }
+        } catch {
+            return Response.json(
+                { error: "Token Bearer inválido" },
+                { status: 401 },
+            )
+        }
+
+        if (!userId) {
+            return Response.json(
+                { error: "Token Bearer não possui identificador de usuário" },
+                { status: 401 },
+            )
+        }
+
         const formData = await request.formData()
         const description = formData.get("description")
         const latitude = formData.get("latitude")
@@ -35,10 +74,7 @@ export async function POST(request: NextRequest) {
             Accept: "application/json",
         })
 
-        const authorization = request.headers.get("Authorization")
-        if (authorization) {
-            headers.set("Authorization", authorization)
-        }
+        headers.set("Authorization", authorization)
 
         const apiUrl = process.env.APIS_URL + "/vistorias"
 

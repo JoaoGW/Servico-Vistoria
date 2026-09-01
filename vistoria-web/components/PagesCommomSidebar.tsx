@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 interface PagesCommomSidebarProps {
+  activeItem?: 'dashboard' | 'vistorias'
   collapsed: boolean
   onLogout: () => void
   onToggle: () => void
@@ -32,7 +33,7 @@ function NavigationItem({ active = false, collapsed, href, icon, label }: Naviga
   )
 }
 
-export default function PagesCommomSidebar({ collapsed, onLogout, onToggle }: PagesCommomSidebarProps) {
+export default function PagesCommomSidebar({ activeItem = 'dashboard', collapsed, onLogout, onToggle }: PagesCommomSidebarProps) {
   return (
     <aside
       className={`hidden min-h-dvh flex-col bg-[#1E274A] text-[#ECEDEE] transition-[width] duration-200 lg:flex ${
@@ -69,9 +70,9 @@ export default function PagesCommomSidebar({ collapsed, onLogout, onToggle }: Pa
 
         <div className="space-y-1">
           <NavigationItem
-            active
+            active={activeItem === 'dashboard'}
             collapsed={collapsed}
-            href="#painel-geral"
+            href="/dashboard"
             label="Painel geral"
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20">
@@ -80,8 +81,9 @@ export default function PagesCommomSidebar({ collapsed, onLogout, onToggle }: Pa
             }
           />
           <NavigationItem
+            active={activeItem === 'vistorias'}
             collapsed={collapsed}
-            href="#vistorias"
+            href="/vistorias"
             label="Vistorias"
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20">
@@ -91,7 +93,7 @@ export default function PagesCommomSidebar({ collapsed, onLogout, onToggle }: Pa
           />
           <NavigationItem
             collapsed={collapsed}
-            href="#documentos"
+            href="/dashboard#documentos"
             label="Documentos"
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20">
