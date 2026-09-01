@@ -1,0 +1,133 @@
+import {
+  Portfolio,
+  Investment,
+  TrendingStock,
+  FinancialGoal,
+} from "./types";
+
+export const mockPortfolio: Portfolio = {
+  totalValue: 125430.5,
+  totalGain: 15430.5,
+  totalGainPercentage: 14.02,
+  dayChange: 1250.75,
+  dayChangePercentage: 1.01,
+};
+
+export const mockInvestments: Investment[] = [
+  {
+    id: "1",
+    symbol: "AAPL",
+    name: "Apple Inc.",
+    currentPrice: 175.43,
+    change: 2.15,
+    changePercentage: 1.24,
+    shares: 50,
+    value: 8771.5,
+    gain: 107.5,
+    gainPercentage: 1.24,
+    logo: "https://i.pravatar.cc/150?img=1",
+  },
+  {
+    id: "2",
+    symbol: "GOOGL",
+    name: "Alphabet Inc.",
+    currentPrice: 142.67,
+    change: -1.23,
+    changePercentage: -0.85,
+    shares: 30,
+    value: 4280.1,
+    gain: -36.9,
+    gainPercentage: -0.85,
+    logo: "https://i.pravatar.cc/150?img=2",
+  },
+  {
+    id: "3",
+    symbol: "TSLA",
+    name: "Tesla Inc.",
+    currentPrice: 248.5,
+    change: 8.75,
+    changePercentage: 3.65,
+    shares: 20,
+    value: 4970.0,
+    gain: 175.0,
+    gainPercentage: 3.65,
+    logo: "https://i.pravatar.cc/150?img=3",
+  },
+  {
+    id: "4",
+    symbol: "MSFT",
+    name: "Microsoft Corp.",
+    currentPrice: 378.92,
+    change: 1.45,
+    changePercentage: 0.38,
+    shares: 15,
+    value: 5683.8,
+    gain: 21.75,
+    gainPercentage: 0.38,
+    logo: "https://i.pravatar.cc/150?img=4",
+  },
+];
+
+export const mockTrendingStocks: TrendingStock[] = [
+  {
+    id: "1",
+    symbol: "NVDA",
+    name: "NVIDIA Corp.",
+    price: 875.3,
+    change: 45.2,
+    changePercentage: 5.45,
+    volume: "45.2M",
+    logo: "https://i.pravatar.cc/150?img=5",
+  },
+  {
+    id: "2",
+    symbol: "AMZN",
+    name: "Amazon.com Inc.",
+    price: 185.67,
+    change: -2.15,
+    changePercentage: -1.14,
+    volume: "32.8M",
+    logo: "https://i.pravatar.cc/150?img=6",
+  },
+  {
+    id: "3",
+    symbol: "META",
+    name: "Meta Platforms Inc.",
+    price: 485.2,
+    change: 12.45,
+    changePercentage: 2.63,
+    volume: "28.5M",
+    logo: "https://i.pravatar.cc/150?img=7",
+  },
+];
+
+export const mockFinancialGoals: FinancialGoal[] = [
+  {
+    id: "1",
+    title: "Emergency Fund",
+    targetAmount: 10000,
+    currentAmount: 7500,
+    deadline: "Dec 2024",
+    progress: 75,
+    icon: "shield",
+  },
+  {
+    id: "2",
+    title: "House Down Payment",
+    targetAmount: 50000,
+    currentAmount: 32000,
+    deadline: "Jun 2025",
+    progress: 64,
+    icon: "home",
+  },
+  {
+    id: "3",
+    title: "Retirement Fund",
+    targetAmount: 100000,
+    currentAmount: 45000,
+    deadline: "Dec 2030",
+    progress: 45,
+    icon: "trending-up",
+  },
+];
+
