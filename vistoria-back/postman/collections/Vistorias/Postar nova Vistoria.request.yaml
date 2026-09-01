@@ -1,5 +1,5 @@
 $kind: http-request
 name: Postar nova Vistoria
-url: ""
-method: GET
+url: "{{localhost}}/vistorias"
+method: POST
 order: 1933298959117576

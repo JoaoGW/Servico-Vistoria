@@ -1,35 +1,27 @@
 import { NextRequest } from "next/server"
 
 /**
- * Cria uma vistoria com os dados e a foto enviados pelo cliente.
+ * Atualiza o status pendente ou a foto de uma vistoria.
  *
- * @param request - Requisição multipart contendo os dados da vistoria e a foto.
- * @returns Retorna a vistoria criada ou o erro retornado pela API.
+ * @param request - Requisição contendo o status pendente ou a foto.
+ * @param context - Contexto com o identificador da vistoria.
+ * @returns Retorna a vistoria atualizada ou o erro retornado pela API.
  * @throws Retorna erro quando a requisição ou a API externa falhar.
  */
-export async function POST(request: NextRequest) {
+export async function PUT(
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> },
+) {
     try {
-        if (request.method !== "POST") {
+        if (request.method !== "PUT") {
             return Response.json(
                 { error: "O método " + request.method + " na requisição não é um método válido" },
                 { status: 405 },
             )
         }
 
-        const userId = crypto.randomUUID()
+        const { id } = await context.params
         const formData = await request.formData()
-        const description = formData.get("description")
-        const latitude = formData.get("latitude")
-        const longitude = formData.get("longitude")
-
-        if (!description || !latitude || !longitude) {
-            return Response.json(
-                { error: "Algumas informações não foram disponibilizadas no envio da requisição" },
-                { status: 400 },
-            )
-        }
-
-        formData.set("userId", userId)
 
         const headers = new Headers({
             Accept: "application/json",
@@ -40,10 +32,10 @@ export async function POST(request: NextRequest) {
             headers.set("Authorization", authorization)
         }
 
-        const apiUrl = process.env.APIS_URL + "/vistorias"
+        const apiUrl = process.env.APIS_URL + "/vistorias" + `/${id}`
 
         const response = await fetch(apiUrl, {
-            method: "POST",
+            method: "PUT",
             headers,
             body: formData,
         })
@@ -51,7 +43,7 @@ export async function POST(request: NextRequest) {
         if (!response.ok) {
             return Response.json(
                 {
-                    error: "Erro no processo de response da API - Criar Vistoria",
+                    error: "Erro no processo de response da API - Atualização de Vistoria",
                 },
                 { status: response.status },
             )
@@ -62,7 +54,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         return Response.json(
             {
-                error: "Erro encontrado na API - Criar Vistoria: " + error,
+                error: "Erro encontrado na API - Atualização de Vistoria: " + error,
             },
             { status: 500 },
         )
@@ -70,20 +62,26 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Busca todas as vistorias cadastradas na API.
+ * Remove uma vistoria pelo seu identificador.
  *
  * @param request - Requisição usada para encaminhar a autorização do usuário.
- * @returns Retorna a lista de vistorias ou o erro retornado pela API.
+ * @param context - Contexto com o identificador da vistoria.
+ * @returns Retorna a vistoria removida ou o erro retornado pela API.
  * @throws Retorna erro quando a API externa falhar.
  */
-export async function GET(request: NextRequest) {
+export async function DELETE(
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> },
+) {
     try {
-        if (request.method !== "GET") {
+        if (request.method !== "DELETE") {
             return Response.json(
                 { error: "O método " + request.method + " na requisição não é um método válido" },
                 { status: 405 },
             )
         }
+
+        const { id } = await context.params
 
         const headers = new Headers({
             Accept: "application/json",
@@ -94,17 +92,17 @@ export async function GET(request: NextRequest) {
             headers.set("Authorization", authorization)
         }
 
-        const apiUrl = process.env.APIS_URL + "/vistorias"
+        const apiUrl = process.env.APIS_URL + "/vistorias" + `/${id}`
 
         const response = await fetch(apiUrl, {
-            method: "GET",
+            method: "DELETE",
             headers,
         })
 
         if (!response.ok) {
             return Response.json(
                 {
-                    error: "Erro no processo de response da API - Read das Vistorias",
+                    error: "Erro no processo de response da API - Deleção de Vistoria",
                 },
                 { status: response.status },
             )
@@ -115,7 +113,7 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         return Response.json(
             {
-                error: "Erro encontrado na API - Read das Vistorias: " + error,
+                error: "Erro encontrado na API - Deleção de Vistoria: " + error,
             },
             { status: 500 },
         )

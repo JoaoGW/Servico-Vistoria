@@ -1,5 +1,5 @@
 $kind: http-request
 name: Visualizar Documentos
-url: ""
+url: "{{localhost}}/documentos"
 method: GET
 order: 1788182284678

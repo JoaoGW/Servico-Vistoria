@@ -1,5 +1,20 @@
 $kind: http-request
 name: Logar Usuário
-url: ""
-method: GET
+url: "{{localhost}}/usuarios/login"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "email": "desafio@peacore.com",
+      "password": "peacore123"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{auth_secret_10fe}}"
+scripts:
+  - type: afterResponse
+    code: pm.collectionVariables.set('token', pm.response.json().accessToken);
+    language: text/javascript
 order: 1788182630588

@@ -1,5 +1,17 @@
 $kind: collection
 name: Usuários
 variables:
-  userId: ""
-  token: ""
+  - key: userId
+    value: ""
+    secret: false
+  - key: token
+    value: ""
+    secret: false
+  - key: auth_secret_10fe
+    secret: true
+    source:
+      provider: postman
+      postman:
+        type: local
+        secretId: 152116e4-6e96-40d0-b1e4-a22ca8e2980d
+        vaultId: local

@@ -1,5 +1,5 @@
 $kind: http-request
 name: Visualizar Vistorias
-url: ""
+url: "{{localhost}}/vistorias"
 method: GET
 order: 1788183409330
