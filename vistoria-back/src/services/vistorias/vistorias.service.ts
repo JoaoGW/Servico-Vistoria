@@ -16,6 +16,10 @@ export type ImagemVistoria = {
   mimetype: string;
 };
 
+export type UpdateVistoriaDto = {
+  pendente?: boolean;
+};
+
 @Injectable()
 export class VistoriasService {
   findAll() {
@@ -65,6 +69,32 @@ export class VistoriasService {
       })
       .from(vistorias)
       .where(eq(vistorias.id, id));
+
+    return vistoria;
+  }
+
+  async update(id: string, data: UpdateVistoriaDto, photo?: ImagemVistoria) {
+    const [vistoria] = await db
+      .update(vistorias)
+      .set({
+        ...(data.pendente !== undefined && { pendente: data.pendente }),
+        ...(photo && {
+          photo: photo.buffer,
+          photoMimeType: photo.mimetype,
+        }),
+      })
+      .where(eq(vistorias.id, id))
+      .returning({
+        id: vistorias.id,
+        userId: vistorias.userId,
+        description: vistorias.description,
+        photoMimeType: vistorias.photoMimeType,
+        latitude: vistorias.latitude,
+        longitude: vistorias.longitude,
+        pendente: vistorias.pendente,
+        createdAt: vistorias.createdAt,
+        updatedAt: vistorias.updatedAt,
+      });
 
     return vistoria;
   }
