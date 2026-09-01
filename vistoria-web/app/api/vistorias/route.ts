@@ -56,8 +56,8 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        const data: { description?: unknown } = await request.json()
-        const description = typeof data.description === "string" ? data.description.trim() : ""
+        const requestData: { description?: unknown } = await request.json()
+        const description = typeof requestData.description === "string" ? requestData.description.trim() : ""
 
         if (!description) {
             return Response.json(
