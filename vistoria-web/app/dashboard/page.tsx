@@ -9,8 +9,8 @@ import OverviewCard from '@/components/Dashboard/OverviewCard'
 interface Vistoria {
   id: string
   description: string
-  latitude: number
-  longitude: number
+  latitude: number | null
+  longitude: number | null
   pendente: boolean
   createdAt: string
   updatedAt: string

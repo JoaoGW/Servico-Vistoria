@@ -6,9 +6,6 @@ import { vistorias } from '../../db/schema.js';
 export type CreateVistoriaDto = {
   userId: string;
   description: string;
-  latitude: number;
-  longitude: number;
-  pendente: boolean;
 };
 
 export type ImagemVistoria = {
@@ -18,6 +15,8 @@ export type ImagemVistoria = {
 
 export type UpdateVistoriaDto = {
   pendente?: boolean;
+  latitude?: number;
+  longitude?: number;
 };
 
 @Injectable()
@@ -38,13 +37,13 @@ export class VistoriasService {
       .from(vistorias);
   }
 
-  async create(data: CreateVistoriaDto, photo: ImagemVistoria) {
+  async create(data: CreateVistoriaDto) {
     const [vistoria] = await db
       .insert(vistorias)
       .values({
-        ...data,
-        photo: photo.buffer,
-        photoMimeType: photo.mimetype,
+        userId: data.userId,
+        description: data.description,
+        pendente: true,
       })
       .returning({
         id: vistorias.id,
@@ -78,6 +77,8 @@ export class VistoriasService {
       .update(vistorias)
       .set({
         ...(data.pendente !== undefined && { pendente: data.pendente }),
+        ...(data.latitude !== undefined && { latitude: data.latitude }),
+        ...(data.longitude !== undefined && { longitude: data.longitude }),
         ...(photo && {
           photo: photo.buffer,
           photoMimeType: photo.mimetype,

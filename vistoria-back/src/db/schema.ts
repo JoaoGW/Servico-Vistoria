@@ -37,11 +37,11 @@ export const vistorias = pgTable("vistorias", {
     .notNull()
     .references(() => usuarios.id),
   description: text("descricao").notNull(), // Descrição da vistoria
-  photo: bytea("foto").notNull(), // Imagem da vistoria
-  photoMimeType: varchar("foto_mime_type", { length: 127 }).notNull(),
-  latitude: doublePrecision("latitude").notNull(), // Latitude para verificar o local da vistoria
-  longitude: doublePrecision("longitude").notNull(), // Longitude para verificar o local da vistoria
-  pendente: boolean("pendente").notNull(), // Mostra se aquela vistoria já terminou ou ainda está pendente
+  photo: bytea("foto"), // Imagem registrada pelo aplicativo mobile
+  photoMimeType: varchar("foto_mime_type", { length: 127 }),
+  latitude: doublePrecision("latitude"), // Localização registrada pelo aplicativo mobile
+  longitude: doublePrecision("longitude"),
+  pendente: boolean("pendente").notNull().default(true), // Toda vistoria começa pendente
   createdAt: timestamp("data_criacao", { // Usado pela API para comparar qual versão é a mais recente
     withTimezone: true,
     mode: "date",

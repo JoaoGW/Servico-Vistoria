@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server"
 
 /**
- * Cria uma vistoria com os dados e a foto enviados pelo cliente.
+ * Cria uma vistoria com a descrição enviada pelo cliente web.
  *
- * @param request - Requisição multipart contendo os dados da vistoria e a foto.
+ * @param request - Requisição JSON contendo a descrição da vistoria.
  * @returns Retorna a vistoria criada ou o erro retornado pela API.
  * @throws Retorna erro quando a requisição ou a API externa falhar.
  */
@@ -56,22 +56,19 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        const formData = await request.formData()
-        const description = formData.get("description")
-        const latitude = formData.get("latitude")
-        const longitude = formData.get("longitude")
+        const data: { description?: unknown } = await request.json()
+        const description = typeof data.description === "string" ? data.description.trim() : ""
 
-        if (!description || !latitude || !longitude) {
+        if (!description) {
             return Response.json(
-                { error: "Algumas informações não foram disponibilizadas no envio da requisição" },
+                { error: "A descrição não foi disponibilizada no envio da requisição" },
                 { status: 400 },
             )
         }
 
-        formData.set("userId", userId)
-
         const headers = new Headers({
             Accept: "application/json",
+            "Content-Type": "application/json",
         })
 
         headers.set("Authorization", authorization)
@@ -81,7 +78,7 @@ export async function POST(request: NextRequest) {
         const response = await fetch(apiUrl, {
             method: "POST",
             headers,
-            body: formData,
+            body: JSON.stringify({ description, userId }),
         })
 
         if (!response.ok) {

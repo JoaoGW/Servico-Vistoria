@@ -1,6 +1,6 @@
 'use client'
 
-import { type ChangeEvent, type FormEvent, useState } from 'react'
+import { type FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import PagesCommomSidebar from '@/components/PagesCommomSidebar'
@@ -9,41 +9,31 @@ import SuccessModal from '@/components/Modals/SuccessModal'
 
 interface DadosVistoria {
   description: string
-  latitude: string
-  longitude: string
-  photo: File
 }
 
-const etapas = ['Dados da vistoria', 'Localização', 'Evidência', 'Revisão']
-const tamanhoMaximoFoto = 10 * 1024 * 1024
+const etapas = ['Dados da vistoria', 'Revisão']
 
 /**
- * Cria uma vistoria com os dados preenchidos pelo usuário.
+ * Cria uma vistoria com a descrição preenchida pelo usuário.
  *
  * @param dados - Dados obrigatórios para o cadastro da vistoria.
  * @returns Retorna a vistoria criada pela API.
  * @throws Will throw an error if the request fails or the response is not successful.
  */
-const criarVistoria = async ({ description, latitude, longitude, photo }: DadosVistoria) => {
+const criarVistoria = async ({ description }: DadosVistoria) => {
   const token = sessionStorage.getItem('accessToken')
 
   if (!token) {
     throw new Error('Sua sessão não foi encontrada. Entre novamente para cadastrar uma vistoria.')
   }
 
-  const formData = new FormData()
-  formData.append('description', description)
-  formData.append('latitude', latitude)
-  formData.append('longitude', longitude)
-  formData.append('photo', photo)
-  formData.append('pendente', 'true')
-
   const response = await fetch('/api/vistorias', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
-    body: formData,
+    body: JSON.stringify({ description }),
   })
 
   if (!response.ok) {
@@ -58,24 +48,14 @@ export default function NovaVistoria() {
   const [etapaAtual, setEtapaAtual] = useState(1)
   const [sidebarRecolhida, setSidebarRecolhida] = useState(false)
   const [description, setDescription] = useState('')
-  const [latitude, setLatitude] = useState('')
-  const [longitude, setLongitude] = useState('')
-  const [photo, setPhoto] = useState<File | null>(null)
-  const [erroFoto, setErroFoto] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [modalErro, setModalErro] = useState(false)
   const [modalSucesso, setModalSucesso] = useState(false)
   const [mensagemErro, setMensagemErro] = useState('')
 
-  const possuiDadosPreenchidos = Boolean(description || latitude || longitude || photo)
-
   const limparCadastro = () => {
     setEtapaAtual(1)
     setDescription('')
-    setLatitude('')
-    setLongitude('')
-    setPhoto(null)
-    setErroFoto('')
   }
 
   const sair = () => {
@@ -84,38 +64,11 @@ export default function NovaVistoria() {
   }
 
   const cancelar = () => {
-    if (possuiDadosPreenchidos && !window.confirm('Os dados preenchidos serão descartados. Deseja cancelar o cadastro?')) {
+    if (description && !window.confirm('Os dados preenchidos serão descartados. Deseja cancelar o cadastro?')) {
       return
     }
 
     router.push('/dashboard')
-  }
-
-  const selecionarFoto = (event: ChangeEvent<HTMLInputElement>) => {
-    const arquivo = event.target.files?.[0]
-
-    if (!arquivo) {
-      setPhoto(null)
-      setErroFoto('')
-      return
-    }
-
-    if (!arquivo.type.startsWith('image/')) {
-      setPhoto(null)
-      setErroFoto('Selecione um arquivo de imagem válido.')
-      event.target.value = ''
-      return
-    }
-
-    if (arquivo.size > tamanhoMaximoFoto) {
-      setPhoto(null)
-      setErroFoto('A imagem deve ter no máximo 10 MB.')
-      event.target.value = ''
-      return
-    }
-
-    setPhoto(arquivo)
-    setErroFoto('')
   }
 
   const enviarFormulario = async (event: FormEvent<HTMLFormElement>) => {
@@ -126,16 +79,10 @@ export default function NovaVistoria() {
       return
     }
 
-    if (!photo) {
-      setEtapaAtual(3)
-      setErroFoto('Selecione a foto obrigatória da vistoria.')
-      return
-    }
-
     setEnviando(true)
 
     try {
-      await criarVistoria({ description, latitude, longitude, photo })
+      await criarVistoria({ description })
       setModalSucesso(true)
     } catch (error) {
       setMensagemErro(error instanceof Error ? error.message : 'Não foi possível cadastrar a vistoria.')
@@ -176,7 +123,7 @@ export default function NovaVistoria() {
             <div className="border-b border-[#DDE3ED] pb-6">
               <h2 className="text-3xl font-bold tracking-tight text-[#1E274A]">Cadastrar vistoria</h2>
               <p className="mt-2 text-base leading-6 text-[#687076]">
-                Informe os dados operacionais, a localização e a evidência do atendimento.
+                Registre a solicitação inicial. A localização e a evidência serão adicionadas pelo aplicativo mobile.
               </p>
             </div>
 
@@ -200,7 +147,7 @@ export default function NovaVistoria() {
                         </span>
                         <span className={`text-sm font-semibold ${ativa ? 'text-[#1E274A]' : 'text-[#687076]'}`}>{etapa}</span>
                       </div>
-                      {numeroEtapa < etapas.length ? <span aria-hidden="true" className="mx-4 h-px w-12 bg-[#DDE3ED] sm:w-20" /> : null}
+                      {numeroEtapa < etapas.length ? <span aria-hidden="true" className="mx-4 h-px w-16 bg-[#DDE3ED] sm:w-24" /> : null}
                     </li>
                   )
                 })}
@@ -211,7 +158,7 @@ export default function NovaVistoria() {
               {etapaAtual === 1 ? (
                 <fieldset>
                   <legend className="text-xl font-bold tracking-tight text-[#1E274A]">Dados da vistoria</legend>
-                  <p className="mt-2 text-sm leading-6 text-[#687076]">Descreva objetivamente o atendimento a ser realizado.</p>
+                  <p className="mt-2 text-sm leading-6 text-[#687076]">Descreva objetivamente o atendimento que deverá ser realizado.</p>
 
                   <div className="mt-6">
                     <label className="block text-sm font-semibold text-[#1E274A]" htmlFor="description">
@@ -222,7 +169,7 @@ export default function NovaVistoria() {
                       id="description"
                       name="description"
                       onChange={(event) => setDescription(event.target.value)}
-                      placeholder="Ex.: Instalação de equipamento no local informado."
+                      placeholder="Ex.: Instalação de equipamento X no endereço Rua das Margaridas, 123 - São Paulo, SP. Informar se o cliente possui alguma condição especial."
                       required
                       value={description}
                     />
@@ -231,98 +178,14 @@ export default function NovaVistoria() {
               ) : null}
 
               {etapaAtual === 2 ? (
-                <fieldset>
-                  <legend className="text-xl font-bold tracking-tight text-[#1E274A]">Localização</legend>
-                  <p className="mt-2 text-sm leading-6 text-[#687076]">Use coordenadas em graus decimais para identificar o local da vistoria.</p>
-
-                  <div className="mt-6 grid gap-6 sm:grid-cols-2">
-                    <div>
-                      <label className="block text-sm font-semibold text-[#1E274A]" htmlFor="latitude">
-                        Latitude
-                      </label>
-                      <input
-                        className="mt-2 h-12 w-full rounded-lg border border-[#BCC7D8] bg-white px-3 text-base text-[#11181C] outline-none transition-colors placeholder:text-[#687076] focus:border-[#1E5BA8] focus:ring-2 focus:ring-[#1E5BA8]/20"
-                        id="latitude"
-                        inputMode="decimal"
-                        max="90"
-                        min="-90"
-                        name="latitude"
-                        onChange={(event) => setLatitude(event.target.value)}
-                        placeholder="Ex.: -23.5505"
-                        required
-                        step="any"
-                        type="number"
-                        value={latitude}
-                      />
-                      <p className="mt-2 text-sm text-[#687076]">Valor entre -90 e 90.</p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-[#1E274A]" htmlFor="longitude">
-                        Longitude
-                      </label>
-                      <input
-                        className="mt-2 h-12 w-full rounded-lg border border-[#BCC7D8] bg-white px-3 text-base text-[#11181C] outline-none transition-colors placeholder:text-[#687076] focus:border-[#1E5BA8] focus:ring-2 focus:ring-[#1E5BA8]/20"
-                        id="longitude"
-                        inputMode="decimal"
-                        max="180"
-                        min="-180"
-                        name="longitude"
-                        onChange={(event) => setLongitude(event.target.value)}
-                        placeholder="Ex.: -46.6333"
-                        required
-                        step="any"
-                        type="number"
-                        value={longitude}
-                      />
-                      <p className="mt-2 text-sm text-[#687076]">Valor entre -180 e 180.</p>
-                    </div>
-                  </div>
-                </fieldset>
-              ) : null}
-
-              {etapaAtual === 3 ? (
-                <fieldset>
-                  <legend className="text-xl font-bold tracking-tight text-[#1E274A]">Evidência</legend>
-                  <p className="mt-2 text-sm leading-6 text-[#687076]">Envie uma imagem do local ou do serviço. O arquivo é obrigatório para concluir o cadastro.</p>
-
-                  <div className="mt-6">
-                    <label className="block text-sm font-semibold text-[#1E274A]" htmlFor="photo">
-                      Foto da vistoria
-                    </label>
-                    <input
-                      accept="image/*"
-                      className="mt-2 block w-full rounded-lg border border-[#BCC7D8] bg-white px-3 py-2 text-base text-[#11181C] file:mr-4 file:rounded-md file:border-0 file:bg-[#E3EFFD] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-[#1E274A] hover:file:bg-[#D6E7FC] focus:border-[#1E5BA8] focus:outline-none focus:ring-2 focus:ring-[#1E5BA8]/20"
-                      id="photo"
-                      name="photo"
-                      onChange={selecionarFoto}
-                      required={!photo}
-                      type="file"
-                    />
-                    <p className="mt-2 text-sm text-[#687076]">Formatos de imagem aceitos. Tamanho máximo de 10 MB.</p>
-                    {photo ? <p className="mt-3 text-sm font-semibold text-[#16803A]">Arquivo selecionado: {photo.name}</p> : null}
-                    {erroFoto ? <p className="mt-3 text-sm font-semibold text-[#C8353F]" role="alert">{erroFoto}</p> : null}
-                  </div>
-                </fieldset>
-              ) : null}
-
-              {etapaAtual === 4 ? (
                 <section aria-labelledby="revisao-title">
                   <h3 className="text-xl font-bold tracking-tight text-[#1E274A]" id="revisao-title">Revisão do cadastro</h3>
-                  <p className="mt-2 text-sm leading-6 text-[#687076]">Confira os dados antes de cadastrar a vistoria.</p>
+                  <p className="mt-2 text-sm leading-6 text-[#687076]">Confira a solicitação antes de cadastrar a vistoria.</p>
 
                   <dl className="mt-6 divide-y divide-[#DDE3ED] border-y border-[#DDE3ED] text-sm">
                     <div className="grid gap-2 py-4 sm:grid-cols-[11rem_minmax(0,1fr)]">
                       <dt className="font-semibold text-[#1E274A]">Descrição</dt>
                       <dd className="whitespace-pre-wrap text-[#687076]">{description}</dd>
-                    </div>
-                    <div className="grid gap-2 py-4 sm:grid-cols-[11rem_minmax(0,1fr)]">
-                      <dt className="font-semibold text-[#1E274A]">Localização</dt>
-                      <dd className="text-[#687076]">{latitude}, {longitude}</dd>
-                    </div>
-                    <div className="grid gap-2 py-4 sm:grid-cols-[11rem_minmax(0,1fr)]">
-                      <dt className="font-semibold text-[#1E274A]">Foto</dt>
-                      <dd className="break-all text-[#687076]">{photo?.name}</dd>
                     </div>
                     <div className="grid gap-2 py-4 sm:grid-cols-[11rem_minmax(0,1fr)]">
                       <dt className="font-semibold text-[#1E274A]">Status inicial</dt>
