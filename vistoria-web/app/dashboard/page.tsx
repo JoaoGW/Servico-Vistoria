@@ -118,7 +118,7 @@ export default function Dashboard() {
             <div className="flex flex-col gap-5 border-b border-[#DDE3ED] pb-6 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <p className="text-sm font-semibold text-[#1E5BA8]">VISÃO OPERACIONAL</p>
-                <h2 className="mt-2 text-3xl font-bold tracking-tight text-[#1E274A]">Vistorias e documentos</h2>
+                <h2 className="mt-2 text-3xl font-bold tracking-tight text-[#1E274A]">Vistorias e Documentos</h2>
                 <p className="mt-2 max-w-2xl text-base leading-6 text-[#687076]">
                   Acompanhe as vistorias da equipe e mantenha os documentos relacionados organizados em um só lugar.
                 </p>

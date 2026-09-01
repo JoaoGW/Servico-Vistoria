@@ -100,6 +100,17 @@ export default function PagesCommomSidebar({ collapsed, onLogout, onToggle }: Pa
               </svg>
             }
           />
+          <NavigationItem
+            collapsed={collapsed}
+            href="#cadastro"
+            label="Novo Técnico"
+            icon={
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20">
+                <circle cx="7.5" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.7" />
+                <path d="M3.5 16c0-2.5 1.8-4.25 4-4.25s4 1.75 4 4.25M15.5 8v5M13 10.5h5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+              </svg>
+            }
+          />
         </div>
       </nav>
 
