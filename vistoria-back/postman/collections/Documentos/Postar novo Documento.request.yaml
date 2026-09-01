@@ -1,5 +1,5 @@
 $kind: http-request
 name: Postar novo Documento
-url: ""
-method: GET
+url: "{{localhost}}/documentos"
+method: POST
 order: 4396760554276669

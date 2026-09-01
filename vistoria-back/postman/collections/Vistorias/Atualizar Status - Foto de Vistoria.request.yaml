@@ -1,7 +1,7 @@
 $kind: http-request
-name: Deletar Vistoria
+name: Atualizar Status / Foto de Vistoria
 url: "{{localhost}}/vistorias/:id"
-method: DELETE
+method: PUT
 pathVariables:
   id: ""
-order: 3818851092252576
+order: 4454638700043809

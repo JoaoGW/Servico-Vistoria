@@ -7,6 +7,7 @@ import {
   NotFoundException,
   Param,
   Post,
+  Put,
   StreamableFile,
   UploadedFile,
   UseInterceptors,
@@ -16,6 +17,7 @@ import { VistoriasService } from '../../services/vistorias/vistorias.service.js'
 import type {
   CreateVistoriaDto,
   ImagemVistoria,
+  UpdateVistoriaDto,
 } from '../../services/vistorias/vistorias.service.js';
 
 @Controller('vistorias')
@@ -46,6 +48,37 @@ export class VistoriasController {
     return this.vistoriasService.create(body, photo);
   }
 
+  @Put(':id')
+  @UseInterceptors(
+    FileInterceptor('photo', {
+      limits: { fileSize: 10 * 1024 * 1024 },
+      fileFilter: (_request, file, callback) =>
+        callback(null, file.mimetype.startsWith('image/')),
+    }),
+  )
+  async update(
+    @Param('id') id: string,
+    @Body() body: { pendente?: string | boolean },
+    @UploadedFile() photo?: ImagemVistoria,
+  ) {
+    const pendente = this.parsePendente(body.pendente);
+
+    if (pendente === undefined && !photo) {
+      throw new BadRequestException(
+        'Informe o campo pendente, uma imagem no campo photo, ou ambos.',
+      );
+    }
+
+    const data: UpdateVistoriaDto = { pendente };
+    const vistoria = await this.vistoriasService.update(id, data, photo);
+
+    if (!vistoria) {
+      throw new NotFoundException('Vistoria não encontrada.');
+    }
+
+    return vistoria;
+  }
+
   @Get(':id/foto')
   async getPhoto(@Param('id') id: string) {
     const vistoria = await this.vistoriasService.findPhoto(id);
@@ -63,5 +96,21 @@ export class VistoriasController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.vistoriasService.remove(id);
+  }
+
+  private parsePendente(value: string | boolean | undefined) {
+    if (value === undefined) {
+      return undefined;
+    }
+
+    if (value === true || value === 'true') {
+      return true;
+    }
+
+    if (value === false || value === 'false') {
+      return false;
+    }
+
+    throw new BadRequestException('O campo pendente deve ser true ou false.');
   }
 }
