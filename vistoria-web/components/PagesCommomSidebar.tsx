@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 interface PagesCommomSidebarProps {
+  activeNavigation?: 'cadastro' | 'dashboard'
   collapsed: boolean
   onLogout: () => void
   onToggle: () => void
@@ -32,7 +33,12 @@ function NavigationItem({ active = false, collapsed, href, icon, label }: Naviga
   )
 }
 
-export default function PagesCommomSidebar({ collapsed, onLogout, onToggle }: PagesCommomSidebarProps) {
+export default function PagesCommomSidebar({
+  activeNavigation = 'dashboard',
+  collapsed,
+  onLogout,
+  onToggle,
+}: PagesCommomSidebarProps) {
   return (
     <aside
       className={`hidden min-h-dvh flex-col bg-[#1E274A] text-[#ECEDEE] transition-[width] duration-200 lg:flex ${
@@ -69,9 +75,9 @@ export default function PagesCommomSidebar({ collapsed, onLogout, onToggle }: Pa
 
         <div className="space-y-1">
           <NavigationItem
-            active
+            active={activeNavigation === 'dashboard'}
             collapsed={collapsed}
-            href="#painel-geral"
+            href="/dashboard"
             label="Painel geral"
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20">
@@ -101,9 +107,10 @@ export default function PagesCommomSidebar({ collapsed, onLogout, onToggle }: Pa
             }
           />
           <NavigationItem
+            active={activeNavigation === 'cadastro'}
             collapsed={collapsed}
-            href="#cadastro"
-            label="Novo Técnico"
+            href="/cadastro"
+            label="Cadastro de usuário"
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20">
                 <circle cx="7.5" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.7" />
