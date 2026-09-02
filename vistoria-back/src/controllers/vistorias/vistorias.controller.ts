@@ -30,22 +30,8 @@ export class VistoriasController {
   }
 
   @Post()
-  @UseInterceptors(
-    FileInterceptor('photo', {
-      limits: { fileSize: 10 * 1024 * 1024 },
-      fileFilter: (_request, file, callback) =>
-        callback(null, file.mimetype.startsWith('image/')),
-    }),
-  )
-  create(
-    @Body() body: CreateVistoriaDto,
-    @UploadedFile() photo?: ImagemVistoria,
-  ) {
-    if (!photo) {
-      throw new BadRequestException('Uma imagem é obrigatória no campo photo.');
-    }
-
-    return this.vistoriasService.create(body, photo);
+  create(@Body() body: CreateVistoriaDto) {
+    return this.vistoriasService.create(body);
   }
 
   @Put(':id')
@@ -58,18 +44,39 @@ export class VistoriasController {
   )
   async update(
     @Param('id') id: string,
-    @Body() body: { pendente?: string | boolean },
+    @Body()
+    body: {
+      pendente?: string | boolean;
+      latitude?: string | number;
+      longitude?: string | number;
+    },
     @UploadedFile() photo?: ImagemVistoria,
   ) {
     const pendente = this.parsePendente(body.pendente);
+    const latitude = this.parseCoordenada(body.latitude, 'latitude', -90, 90);
+    const longitude = this.parseCoordenada(
+      body.longitude,
+      'longitude',
+      -180,
+      180,
+    );
+    const recebeuLocalizacao = latitude !== undefined || longitude !== undefined;
 
-    if (pendente === undefined && !photo) {
+    if (latitude === undefined && longitude !== undefined) {
+      throw new BadRequestException('Informe a latitude junto com a longitude.');
+    }
+
+    if (latitude !== undefined && longitude === undefined) {
+      throw new BadRequestException('Informe a longitude junto com a latitude.');
+    }
+
+    if (pendente === undefined && !recebeuLocalizacao && !photo) {
       throw new BadRequestException(
-        'Informe o campo pendente, uma imagem no campo photo, ou ambos.',
+        'Informe pendente, latitude e longitude, uma imagem no campo photo, ou uma combinação desses campos.',
       );
     }
 
-    const data: UpdateVistoriaDto = { pendente };
+    const data: UpdateVistoriaDto = { pendente, latitude, longitude };
     const vistoria = await this.vistoriasService.update(id, data, photo);
 
     if (!vistoria) {
@@ -83,8 +90,8 @@ export class VistoriasController {
   async getPhoto(@Param('id') id: string) {
     const vistoria = await this.vistoriasService.findPhoto(id);
 
-    if (!vistoria) {
-      throw new NotFoundException('Vistoria não encontrada.');
+    if (!vistoria || !vistoria.photo || !vistoria.photoMimeType) {
+      throw new NotFoundException('A foto da vistoria não foi cadastrada.');
     }
 
     return new StreamableFile(vistoria.photo, {
@@ -112,5 +119,31 @@ export class VistoriasController {
     }
 
     throw new BadRequestException('O campo pendente deve ser true ou false.');
+  }
+
+  private parseCoordenada(
+    value: string | number | undefined,
+    campo: 'latitude' | 'longitude',
+    minimo: number,
+    maximo: number,
+  ) {
+    if (value === undefined) {
+      return undefined;
+    }
+
+    const coordenada = typeof value === 'number' ? value : Number(value);
+
+    if (
+      value === '' ||
+      !Number.isFinite(coordenada) ||
+      coordenada < minimo ||
+      coordenada > maximo
+    ) {
+      throw new BadRequestException(
+        `O campo ${campo} deve estar entre ${minimo} e ${maximo}.`,
+      );
+    }
+
+    return coordenada;
   }
 }

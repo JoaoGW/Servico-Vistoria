@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import ErrorLoginModal from '@/components/Modals/ErrorLoginModal';
+import ErrorModal from '@/components/Modals/ErrorModal';
 
 interface Autenticacao {
   email: string,
@@ -182,7 +182,7 @@ export default function Login() {
           </div>
         </section>
 
-        {modalErro ? <ErrorLoginModal onClose={() => setModalErro(false)} errTitle="Erro ao Fazer Login" errMessage='Não foi possível fazer login. Confire seus dados inseridos e se ainda não tiver um cadastro, cadastre-se!' /> : null}
+        {modalErro ? <ErrorModal onClose={() => setModalErro(false)} title="Erro ao fazer login" message="Não foi possível fazer login. Confira os dados inseridos e tente novamente." /> : null}
       </main>
     </div>
   );

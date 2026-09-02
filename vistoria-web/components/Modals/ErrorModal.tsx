@@ -1,38 +1,30 @@
-interface ErrorLoginModalProps {
-  onClose?: () => void
+interface ErrorModalProps {
+  title: string
+  message: string
+  onClose: () => void
   onRetry?: () => void
-  errTitle: string
-  errMessage: string
 }
 
-export default function ErrorLoginModal({ errTitle, errMessage, onClose, onRetry }: ErrorLoginModalProps) {
+export default function ErrorModal({ message, onClose, onRetry, title }: ErrorModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#090D14]/65 px-4 py-6">
       <section
-        aria-describedby="login-error-description"
-        aria-labelledby="login-error-title"
+        aria-describedby="error-modal-description"
+        aria-labelledby="error-modal-title"
         aria-modal="true"
         className="w-full max-w-md rounded-2xl bg-white p-6 shadow-[0_20px_48px_rgba(9,13,20,0.28)] sm:p-8"
         role="dialog"
       >
         <div className="flex items-start justify-between gap-6">
           <div className="flex items-start gap-4">
-            <svg
-              aria-hidden="true"
-              className="mt-0.5 h-8 w-8 shrink-0"
-              fill="none"
-              viewBox="0 0 32 32"
-            >
+            <svg aria-hidden="true" className="mt-0.5 h-8 w-8 shrink-0" fill="none" viewBox="0 0 32 32">
               <circle cx="16" cy="16" r="13" stroke="#C8353F" strokeWidth="2.5" />
               <path d="M16 9v8M16 22v1" stroke="#C8353F" strokeLinecap="round" strokeWidth="2.5" />
             </svg>
 
-            <div>
-              <p className="text-sm font-semibold text-[#C8353F]">Erro de autenticação</p>
-              <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#1E274A]" id="login-error-title">
-                { errTitle }
-              </h2>
-            </div>
+            <h2 className="text-2xl font-bold tracking-tight text-[#1E274A]" id="error-modal-title">
+              {title}
+            </h2>
           </div>
 
           <button
@@ -47,8 +39,8 @@ export default function ErrorLoginModal({ errTitle, errMessage, onClose, onRetry
           </button>
         </div>
 
-        <p className="mt-6 border-y border-[#DDE3ED] py-5 text-base leading-6 text-[#687076]" id="login-error-description">
-          { errMessage }
+        <p className="mt-6 border-y border-[#DDE3ED] py-5 text-base leading-6 text-[#687076]" id="error-modal-description">
+          {message}
         </p>
 
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -59,13 +51,15 @@ export default function ErrorLoginModal({ errTitle, errMessage, onClose, onRetry
           >
             Fechar
           </button>
-          <button
-            className="h-12 rounded-lg bg-[#1E274A] px-5 text-base font-bold text-white transition-colors hover:bg-[#151C36] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] active:bg-[#11172C]"
-            onClick={onRetry}
-            type="button"
-          >
-            Tentar novamente
-          </button>
+          {onRetry ? (
+            <button
+              className="h-12 rounded-lg bg-[#1E274A] px-5 text-base font-bold text-white transition-colors hover:bg-[#151C36] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] active:bg-[#11172C]"
+              onClick={onRetry}
+              type="button"
+            >
+              Tentar novamente
+            </button>
+          ) : null}
         </div>
       </section>
     </div>

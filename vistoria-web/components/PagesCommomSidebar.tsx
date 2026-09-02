@@ -1,9 +1,15 @@
+'use client'
+
 import type { ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
+
+import { sair } from '@/utils/Sair'
+
+type ActiveNavigationItem = 'dashboard' | 'vistorias' | 'documents' | 'novo_tecnico'
 
 interface PagesCommomSidebarProps {
-  activeNavigation?: 'cadastro' | 'dashboard'
+  activeItem?: ActiveNavigationItem
   collapsed: boolean
-  onLogout: () => void
   onToggle: () => void
 }
 
@@ -34,11 +40,12 @@ function NavigationItem({ active = false, collapsed, href, icon, label }: Naviga
 }
 
 export default function PagesCommomSidebar({
-  activeNavigation = 'dashboard',
+  activeItem = 'dashboard',
   collapsed,
-  onLogout,
   onToggle,
 }: PagesCommomSidebarProps) {
+  const router = useRouter()
+
   return (
     <aside
       className={`hidden min-h-dvh flex-col bg-[#1E274A] text-[#ECEDEE] transition-[width] duration-200 lg:flex ${
@@ -75,7 +82,7 @@ export default function PagesCommomSidebar({
 
         <div className="space-y-1">
           <NavigationItem
-            active={activeNavigation === 'dashboard'}
+            active={activeItem === 'dashboard'}
             collapsed={collapsed}
             href="/dashboard"
             label="Painel geral"
@@ -86,8 +93,9 @@ export default function PagesCommomSidebar({
             }
           />
           <NavigationItem
+            active={activeItem === 'vistorias'}
             collapsed={collapsed}
-            href="#vistorias"
+            href="/vistorias"
             label="Vistorias"
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20">
@@ -96,8 +104,9 @@ export default function PagesCommomSidebar({
             }
           />
           <NavigationItem
+            active={activeItem === 'documents'}
             collapsed={collapsed}
-            href="#documentos"
+            href="/documentos"
             label="Documentos"
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20">
@@ -107,10 +116,10 @@ export default function PagesCommomSidebar({
             }
           />
           <NavigationItem
-            active={activeNavigation === 'cadastro'}
+            active={activeItem === 'novo_tecnico'}
             collapsed={collapsed}
             href="/cadastro"
-            label="Cadastro de usuário"
+            label="Cadastro de Técnico"
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20">
                 <circle cx="7.5" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.7" />
@@ -134,7 +143,7 @@ export default function PagesCommomSidebar({
           className={`mt-4 flex min-h-11 items-center gap-3 rounded-lg text-sm font-semibold text-[#C6D0E5] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#69B3FF] ${
             collapsed ? 'w-full justify-center px-3' : 'w-full px-3'
           }`}
-          onClick={onLogout}
+          onClick={() => sair(router)}
           title={collapsed ? 'Sair' : undefined}
           type="button"
         >

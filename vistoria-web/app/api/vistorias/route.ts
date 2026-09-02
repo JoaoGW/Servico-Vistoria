@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server"
 
 /**
- * Cria uma vistoria com os dados e a foto enviados pelo cliente.
+ * Cria uma vistoria com a descrição enviada pelo cliente web.
  *
- * @param request - Requisição multipart contendo os dados da vistoria e a foto.
+ * @param request - Requisição JSON contendo a descrição da vistoria.
  * @returns Retorna a vistoria criada ou o erro retornado pela API.
  * @throws Retorna erro quando a requisição ou a API externa falhar.
  */
@@ -16,36 +16,69 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        const userId = crypto.randomUUID()
-        const formData = await request.formData()
-        const description = formData.get("description")
-        const latitude = formData.get("latitude")
-        const longitude = formData.get("longitude")
+        const authorization = request.headers.get("Authorization")
 
-        if (!description || !latitude || !longitude) {
+        if (!authorization?.startsWith("Bearer ")) {
             return Response.json(
-                { error: "Algumas informações não foram disponibilizadas no envio da requisição" },
+                { error: "Token Bearer não informado" },
+                { status: 401 },
+            )
+        }
+
+        const token = authorization.replace("Bearer ", "")
+        const payload = token.split(".")[1]
+
+        if (!payload) {
+            return Response.json(
+                { error: "Token Bearer inválido" },
+                { status: 401 },
+            )
+        }
+
+        let userId: string | undefined
+
+        try {
+            const data: { sub?: string } = JSON.parse(Buffer.from(payload, "base64url").toString())
+            if (typeof data.sub === "string") {
+                userId = data.sub
+            }
+        } catch {
+            return Response.json(
+                { error: "Token Bearer inválido" },
+                { status: 401 },
+            )
+        }
+
+        if (!userId) {
+            return Response.json(
+                { error: "Token Bearer não possui identificador de usuário" },
+                { status: 401 },
+            )
+        }
+
+        const requestData: { description?: unknown } = await request.json()
+        const description = typeof requestData.description === "string" ? requestData.description.trim() : ""
+
+        if (!description) {
+            return Response.json(
+                { error: "A descrição não foi disponibilizada no envio da requisição" },
                 { status: 400 },
             )
         }
 
-        formData.set("userId", userId)
-
         const headers = new Headers({
             Accept: "application/json",
+            "Content-Type": "application/json",
         })
 
-        const authorization = request.headers.get("Authorization")
-        if (authorization) {
-            headers.set("Authorization", authorization)
-        }
+        headers.set("Authorization", authorization)
 
         const apiUrl = process.env.APIS_URL + "/vistorias"
 
         const response = await fetch(apiUrl, {
             method: "POST",
             headers,
-            body: formData,
+            body: JSON.stringify({ description, userId }),
         })
 
         if (!response.ok) {

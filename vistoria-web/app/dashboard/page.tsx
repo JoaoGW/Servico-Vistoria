@@ -1,16 +1,17 @@
 'use client'
-
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 import PagesCommomSidebar from '@/components/PagesCommomSidebar'
 import OverviewCard from '@/components/Dashboard/OverviewCard'
+import { NovaVistoriaButton } from '@/components/Buttons/NovaVistoriaButton'
+import { NovoDocumentoButton } from '@/components/Buttons/NovoDocumentoButton'
+import DocumentosTable, { type Documento } from '@/components/Tables/DocumentosTable'
 
 interface Vistoria {
   id: string
   description: string
-  latitude: number
-  longitude: number
+  latitude: number | null
+  longitude: number | null
   pendente: boolean
   createdAt: string
   updatedAt: string
@@ -63,13 +64,36 @@ const visualizarVistorias = async (token: string) => {
   }
 }
 
+/**
+ * Busca todos os documentos disponíveis para o usuário autenticado.
+ *
+ * @param token - Token JWT usado na autorização da requisição.
+ * @returns Retorna a lista de documentos cadastrados.
+ * @throws Will throw an error if the request fails or the response is not successful.
+ */
+const visualizarDocumentos = async (token: string) => {
+  const response = await fetch('/api/documentos', {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error('Não foi possível recuperar os documentos.')
+  }
+
+  return response.json() as Promise<Documento[]>
+}
+
 export default function Dashboard() {
-  const router = useRouter()
   const [vistorias, setVistorias] = useState<Vistoria[]>([])
+  const [documentos, setDocumentos] = useState<Documento[]>([])
   const [mensagemErro, setMensagemErro] = useState<string>('')
   const [carregando, setCarregando] = useState<boolean>(true)
   const [sidebarRecolhida, setSidebarRecolhida] = useState<boolean>(false)
 
+  // Para solicitar as vistorias à API
   useEffect(() => {
     const token = sessionStorage.getItem('accessToken')
     const requisicao = token
@@ -82,16 +106,24 @@ export default function Dashboard() {
       .finally(() => setCarregando(false))
   }, [])
 
+  // Para solicitar os documentos à API
+  useEffect(() => {
+      const token = sessionStorage.getItem('accessToken')
+      const requisicao = token
+        ? visualizarDocumentos(token)
+        : Promise.reject(new Error('Sua sessão não foi encontrada. Entre novamente para acessar os documentos.'))
+
+      void requisicao
+        .then((dados) => setDocumentos(dados))
+        .catch((error: unknown) => setMensagemErro(error instanceof Error ? error.message : 'Não foi possível recuperar os documentos.'))
+        .finally(() => setCarregando(false))
+    }, [])
+
   const vistoriasRecentes = [...vistorias].sort(
     (primeira, segunda) => new Date(segunda.updatedAt).getTime() - new Date(primeira.updatedAt).getTime(),
   )
   const pendentes = vistorias.filter((vistoria) => vistoria.pendente)
   const concluidas = vistorias.filter((vistoria) => !vistoria.pendente)
-
-  const sair = () => {
-    sessionStorage.removeItem('accessToken')
-    router.replace('/')
-  }
 
   return (
     <div
@@ -101,7 +133,6 @@ export default function Dashboard() {
     >
       <PagesCommomSidebar
         collapsed={sidebarRecolhida}
-        onLogout={sair}
         onToggle={() => setSidebarRecolhida((recolhida) => !recolhida)}
       />
 
@@ -125,18 +156,8 @@ export default function Dashboard() {
               </div>
 
               <div className="flex flex-wrap gap-3 lg:shrink-0">
-                <button
-                  className="inline-flex h-11 items-center justify-center rounded-lg bg-[#1E274A] px-5 text-sm font-bold text-white transition-colors hover:bg-[#151C36] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] active:bg-[#11172C]"
-                  type="button"
-                >
-                  + Nova vistoria
-                </button>
-                <button
-                  className="inline-flex h-11 items-center justify-center rounded-lg border border-[#8FC2FF] bg-white px-5 text-sm font-bold text-[#1E274A] transition-colors hover:border-[#1E5BA8] hover:bg-[#EFF6FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] active:bg-[#E3EFFD]"
-                  type="button"
-                >
-                  + Novo documento
-                </button>
+                <NovaVistoriaButton />
+                <NovoDocumentoButton />
               </div>
             </div>
 
@@ -150,9 +171,9 @@ export default function Dashboard() {
             {!carregando && !mensagemErro ? (
               <>
                 <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                  <OverviewCard description="vistorias cadastradas" label="Total" tone="default" value={vistorias.length} />
-                  <OverviewCard description="aguardando conclusão" label="Pendentes" tone="warning" value={pendentes.length} />
-                  <OverviewCard description="vistorias finalizadas" label="Concluídas" tone="success" value={concluidas.length} />
+                  <OverviewCard description="vistorias cadastradas" label="Total" tipos="default" value={vistorias.length} />
+                  <OverviewCard description="aguardando conclusão" label="Pendentes" tipos="warning" value={pendentes.length} />
+                  <OverviewCard description="vistorias finalizadas" label="Concluídas" tipos="success" value={concluidas.length} />
                 </div>
 
                 <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(19rem,0.85fr)]">
@@ -226,18 +247,23 @@ export default function Dashboard() {
               </>
             ) : null}
 
-            <section className="scroll-mt-6 mt-6 border-y border-[#DDE3ED] py-6 sm:flex sm:items-center sm:justify-between sm:gap-8" id="documentos">
+            <section className="scroll-mt-6 mt-6" id="documentos">
               <div>
                 <p className="text-sm font-semibold text-[#1E5BA8]">DOCUMENTOS</p>
                 <h3 className="mt-2 text-xl font-bold tracking-tight text-[#1E274A]">Documentos vinculados às vistorias</h3>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[#687076]">
-                  A área de documentos estará disponível para consultar e organizar os arquivos relacionados às vistorias.
+                  Consulte e organize os arquivos relacionados às vistorias.
                 </p>
+              </div>
+
+              {!carregando && !mensagemErro && documentos.length ? <DocumentosTable documentos={documentos} /> : null}
+
+              {!carregando && !mensagemErro && !documentos.length ? (
                 <p className="mt-4 flex items-center gap-2 text-sm font-medium text-[#687076]">
                   <span aria-hidden="true" className="h-2 w-2 rounded-full bg-[#AEBBD2]" />
                   Nenhum documento cadastrado.
                 </p>
-              </div>
+              ) : null}
             </section>
           </div>
         </section>
