@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server"
 
+// Autenticar um usuário já cadastrado
 export async function POST(request: NextRequest) {
     try {
         if (request.method !== "POST") {

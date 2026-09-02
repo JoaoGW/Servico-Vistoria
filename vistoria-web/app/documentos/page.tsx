@@ -1,20 +1,13 @@
 'use client'
-
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+
 
 import { NovoDocumentoButton } from '@/components/Buttons/NovoDocumentoButton'
 import DocumentosTable from '@/components/Documentos/DocumentosTable'
 import PagesCommomSidebar from '@/components/PagesCommomSidebar'
 
 export default function DocumentosPage() {
-  const router = useRouter()
-  const [sidebarRecolhida, setSidebarRecolhida] = useState(false)
-
-  const sair = () => {
-    sessionStorage.removeItem('accessToken')
-    router.replace('/')
-  }
+  const [sidebarRecolhida, setSidebarRecolhida] = useState<boolean>(false)
 
   return (
     <div
@@ -25,7 +18,6 @@ export default function DocumentosPage() {
       <PagesCommomSidebar
         activeItem="documents"
         collapsed={sidebarRecolhida}
-        onLogout={sair}
         onToggle={() => setSidebarRecolhida((recolhida) => !recolhida)}
       />
 

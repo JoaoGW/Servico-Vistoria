@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
 
-import { useRouter } from 'next/navigation'
 
 import PagesCommomSidebar from '@/components/PagesCommomSidebar'
 import OverviewCard from '@/components/Dashboard/OverviewCard'
@@ -66,7 +65,6 @@ const visualizarVistorias = async (token: string) => {
 }
 
 export default function Dashboard() {
-  const router = useRouter()
   const [vistorias, setVistorias] = useState<Vistoria[]>([])
   const [mensagemErro, setMensagemErro] = useState<string>('')
   const [carregando, setCarregando] = useState<boolean>(true)
@@ -90,11 +88,6 @@ export default function Dashboard() {
   const pendentes = vistorias.filter((vistoria) => vistoria.pendente)
   const concluidas = vistorias.filter((vistoria) => !vistoria.pendente)
 
-  const sair = () => {
-    sessionStorage.removeItem('accessToken')
-    router.replace('/')
-  }
-
   return (
     <div
       className={`min-h-dvh bg-[#F2F4F8] text-[#11181C] lg:grid ${
@@ -103,7 +96,6 @@ export default function Dashboard() {
     >
       <PagesCommomSidebar
         collapsed={sidebarRecolhida}
-        onLogout={sair}
         onToggle={() => setSidebarRecolhida((recolhida) => !recolhida)}
       />
 
@@ -142,9 +134,9 @@ export default function Dashboard() {
             {!carregando && !mensagemErro ? (
               <>
                 <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                  <OverviewCard description="vistorias cadastradas" label="Total" tone="default" value={vistorias.length} />
-                  <OverviewCard description="aguardando conclusão" label="Pendentes" tone="warning" value={pendentes.length} />
-                  <OverviewCard description="vistorias finalizadas" label="Concluídas" tone="success" value={concluidas.length} />
+                  <OverviewCard description="vistorias cadastradas" label="Total" tipos="default" value={vistorias.length} />
+                  <OverviewCard description="aguardando conclusão" label="Pendentes" tipos="warning" value={pendentes.length} />
+                  <OverviewCard description="vistorias finalizadas" label="Concluídas" tipos="success" value={concluidas.length} />
                 </div>
 
                 <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(19rem,0.85fr)]">

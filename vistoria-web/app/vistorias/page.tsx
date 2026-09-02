@@ -1,10 +1,9 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
 
-import { useRouter } from 'next/navigation'
-
 import PagesCommomSidebar from '@/components/PagesCommomSidebar'
 import { NovaVistoriaButton } from '@/components/Buttons/NovaVistoriaButton'
+
 
 interface Vistoria {
   id: string
@@ -59,13 +58,12 @@ const visualizarVistorias = async (token: string) => {
 }
 
 export default function Vistorias() {
-  const router = useRouter()
   const [vistorias, setVistorias] = useState<Vistoria[]>([])
-  const [carregando, setCarregando] = useState(true)
-  const [mensagemErro, setMensagemErro] = useState('')
+  const [carregando, setCarregando] = useState<boolean>(true)
+  const [mensagemErro, setMensagemErro] = useState<string>('')
   const [filtroAtivo, setFiltroAtivo] = useState<FiltroStatus>('todas')
-  const [busca, setBusca] = useState('')
-  const [sidebarRecolhida, setSidebarRecolhida] = useState(false)
+  const [busca, setBusca] = useState<string>('')
+  const [sidebarRecolhida, setSidebarRecolhida] = useState<boolean>(false)
 
   useEffect(() => {
     const token = sessionStorage.getItem('accessToken')
@@ -92,11 +90,6 @@ export default function Vistorias() {
       .sort((primeira, segunda) => new Date(segunda.createdAt).getTime() - new Date(primeira.createdAt).getTime())
   }, [busca, filtroAtivo, vistorias])
 
-  const sair = () => {
-    sessionStorage.removeItem('accessToken')
-    router.replace('/')
-  }
-
   return (
     <div
       className={`min-h-dvh bg-[#F2F4F8] text-[#11181C] lg:grid ${
@@ -106,7 +99,6 @@ export default function Vistorias() {
       <PagesCommomSidebar
         activeItem="vistorias"
         collapsed={sidebarRecolhida}
-        onLogout={sair}
         onToggle={() => setSidebarRecolhida((recolhida) => !recolhida)}
       />
 

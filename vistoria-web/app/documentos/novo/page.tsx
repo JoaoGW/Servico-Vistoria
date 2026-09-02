@@ -1,19 +1,45 @@
 'use client'
-
 import { useState } from 'react'
+
 import { useRouter } from 'next/navigation'
 
 import FieldLabel from '@/components/FieldLabel'
 import PagesCommomSidebar from '@/components/PagesCommomSidebar'
 
-export default function NovoDocumentoPage() {
-  const router = useRouter()
-  const [sidebarRecolhida, setSidebarRecolhida] = useState(false)
+/**
+ * Adiciona um novo documento com o arquivo escolhido pelo usuário.
+ *
+ * @param dados - Dados obrigatórios para o cadastro da vistoria.
+ * @returns Retorna a vistoria criada pela API.
+ * @throws Will throw an error if the request fails or the response is not successful.
+ */
+const adicionarDocumento = async ({ file }: IFile) => {
+  const token = sessionStorage.getItem('accessToken')
 
-  const sair = () => {
-    sessionStorage.removeItem('accessToken')
-    router.replace('/')
+  if (!token) {
+    throw new Error('Sua sessão não foi encontrada. Entre novamente para enviar um documento.')
   }
+
+  const response = await fetch('/api/documentos', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ file }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Não foi possível enviar o documento. Verifique os dados e tente novamente.')
+  }
+
+  return response.json()
+}
+
+export default function NovoDocumentoPage() {
+  const [sidebarRecolhida, setSidebarRecolhida] = useState<boolean>(false)
+
+  const router = useRouter()
 
   return (
     <div
@@ -24,7 +50,6 @@ export default function NovoDocumentoPage() {
       <PagesCommomSidebar
         activeItem="documents"
         collapsed={sidebarRecolhida}
-        onLogout={sair}
         onToggle={() => setSidebarRecolhida((recolhida) => !recolhida)}
       />
 
@@ -88,14 +113,14 @@ export default function NovoDocumentoPage() {
               <div className="mt-8 flex flex-col-reverse gap-3 border-t border-[#DDE3ED] pt-6 sm:flex-row sm:justify-end">
                 <button
                   className="inline-flex h-11 items-center justify-center rounded-lg border border-[#B9C7DA] bg-white px-5 text-sm font-bold text-[#40516C] transition-colors hover:bg-[#F4F7FB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8]"
-                  onClick={() => {}}
+                  onClick={() => router.back()}
                   type="button"
                 >
                   Cancelar
                 </button>
                 <button
                   className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#163A7B] px-5 text-sm font-bold text-white transition-colors hover:bg-[#112F66] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8]"
-                  onClick={() => {}}
+                  onClick={() => adicionarDocumento}
                   type="button"
                 >
                   <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 20 20">

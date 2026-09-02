@@ -1,11 +1,15 @@
+'use client'
+
 import type { ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
+
+import { sair } from '@/utils/Sair'
 
 type ActiveNavigationItem = 'dashboard' | 'vistorias' | 'documents' | 'novo_tecnico'
 
 interface PagesCommomSidebarProps {
   activeItem?: ActiveNavigationItem
   collapsed: boolean
-  onLogout: () => void
   onToggle: () => void
 }
 
@@ -38,9 +42,10 @@ function NavigationItem({ active = false, collapsed, href, icon, label }: Naviga
 export default function PagesCommomSidebar({
   activeItem = 'dashboard',
   collapsed,
-  onLogout,
   onToggle,
 }: PagesCommomSidebarProps) {
+  const router = useRouter()
+
   return (
     <aside
       className={`hidden min-h-dvh flex-col bg-[#1E274A] text-[#ECEDEE] transition-[width] duration-200 lg:flex ${
@@ -138,7 +143,7 @@ export default function PagesCommomSidebar({
           className={`mt-4 flex min-h-11 items-center gap-3 rounded-lg text-sm font-semibold text-[#C6D0E5] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#69B3FF] ${
             collapsed ? 'w-full justify-center px-3' : 'w-full px-3'
           }`}
-          onClick={onLogout}
+          onClick={() => sair(router)}
           title={collapsed ? 'Sair' : undefined}
           type="button"
         >
