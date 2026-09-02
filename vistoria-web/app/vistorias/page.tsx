@@ -1,10 +1,10 @@
 'use client'
-
 import { useEffect, useMemo, useState } from 'react'
-import Link from 'next/link'
+
 import { useRouter } from 'next/navigation'
 
 import PagesCommomSidebar from '@/components/PagesCommomSidebar'
+import { NovaVistoriaButton } from '@/components/Buttons/NovaVistoriaButton'
 
 interface Vistoria {
   id: string
@@ -129,12 +129,7 @@ export default function Vistorias() {
                     : `${vistorias.length} ${vistorias.length === 1 ? 'ordem de serviço cadastrada' : 'ordens de serviço cadastradas'}`}
                 </p>
               </div>
-              <Link
-                className="inline-flex h-12 items-center justify-center rounded-lg bg-[#1E274A] px-5 text-base font-bold text-white transition-colors hover:bg-[#151C36] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] active:bg-[#11172C]"
-                href="/vistorias/nova"
-              >
-                + Nova vistoria
-              </Link>
+              <NovaVistoriaButton />
             </div>
 
             <section aria-label="Filtros de vistorias" className="mt-6 rounded-2xl border border-[#DDE3ED] bg-white p-4 shadow-[0_8px_24px_rgba(30,39,74,0.06)] sm:p-6">
