@@ -1,0 +1,40 @@
+import { Address } from "./types";
+
+export const initialAddresses: Address[] = [
+  {
+    id: "1",
+    name: "Home Address",
+    street: "123 Main Street, Apt 4B",
+    city: "New York",
+    state: "NY",
+    zipCode: "10001",
+    country: "United States",
+    isPrimary: true,
+    phone: "+1 (555) 123-4567",
+    type: "home",
+  },
+  {
+    id: "2",
+    name: "Work Office",
+    street: "456 Business Avenue, Suite 100",
+    city: "New York",
+    state: "NY",
+    zipCode: "10005",
+    country: "United States",
+    isPrimary: false,
+    phone: "+1 (555) 987-6543",
+    type: "work",
+  },
+  {
+    id: "3",
+    name: "Parent's House",
+    street: "789 Family Road",
+    city: "Brooklyn",
+    state: "NY",
+    zipCode: "11201",
+    country: "United States",
+    isPrimary: false,
+    phone: "+1 (555) 456-7890",
+    type: "other",
+  },
+];
