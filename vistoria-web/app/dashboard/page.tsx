@@ -126,14 +126,16 @@ export default function Dashboard() {
 
               <div className="flex flex-wrap gap-3 lg:shrink-0">
                 <button
-                  className="inline-flex h-11 items-center justify-center rounded-lg bg-[#1E274A] px-5 text-sm font-bold text-white transition-colors hover:bg-[#151C36] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] active:bg-[#11172C]"
+                  className="inline-flex h-11 items-center justify-center rounded-lg bg-[#1E274A] px-5 text-sm font-bold text-white transition-colors hover:bg-[#151C36] hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] active:bg-[#11172C]"
                   type="button"
+                  onClick={() => router.push("/vistorias")}
                 >
                   + Nova vistoria
                 </button>
                 <button
-                  className="inline-flex h-11 items-center justify-center rounded-lg border border-[#8FC2FF] bg-white px-5 text-sm font-bold text-[#1E274A] transition-colors hover:border-[#1E5BA8] hover:bg-[#EFF6FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] active:bg-[#E3EFFD]"
+                  className="inline-flex h-11 items-center justify-center rounded-lg border border-[#8FC2FF] bg-white px-5 text-sm font-bold text-[#1E274A] transition-colors hover:border-[#1E5BA8] hover:cursor-pointer hover:bg-[#EFF6FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] active:bg-[#E3EFFD]"
                   type="button"
+                  onClick={() => router.push("/documentos")}
                 >
                   + Novo documento
                 </button>
