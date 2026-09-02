@@ -118,8 +118,8 @@ export default function PagesCommomSidebar({
           <NavigationItem
             active={activeItem === 'novo_tecnico'}
             collapsed={collapsed}
-            href="#cadastro"
-            label="Novo Técnico"
+            href="/cadastro"
+            label="Cadastro de Técnico"
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20">
                 <circle cx="7.5" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.7" />

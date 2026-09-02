@@ -193,7 +193,7 @@ export default function NovaVistoria() {
               <div className="mt-8 flex flex-col-reverse gap-3 border-t border-[#DDE3ED] pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-col-reverse gap-3 sm:flex-row">
                   <button
-                    className="h-12 rounded-lg border border-[#BCC7D8] px-5 text-base font-semibold text-[#1E274A] transition-colors hover:border-[#1E5BA8] hover:bg-[#F2F4F8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8]"
+                    className="h-12 rounded-lg border border-[#BCC7D8] px-5 text-base font-semibold text-[#1E274A] transition-colors hover:border-[#1E5BA8] hover:bg-[#F2F4F8] hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8]"
                     onClick={cancelar}
                     type="button"
                   >
@@ -212,7 +212,7 @@ export default function NovaVistoria() {
                 </div>
 
                 <button
-                  className="h-12 rounded-lg bg-[#1E274A] px-5 text-base font-bold text-white transition-colors hover:bg-[#151C36] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] active:bg-[#11172C] disabled:cursor-not-allowed disabled:bg-[#AEBBD2]"
+                  className="h-12 rounded-lg bg-[#1E274A] px-5 text-base font-bold text-white transition-colors hover:bg-[#151C36] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] active:bg-[#11172C] disabled:cursor-not-allowed disabled:bg-[#AEBBD2] hover:cursor-pointer"
                   disabled={enviando}
                   type="submit"
                 >

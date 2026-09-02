@@ -192,14 +192,14 @@ export default function NovoDocumentoPage() {
 
               <div className="mt-8 flex flex-col-reverse gap-3 border-t border-[#DDE3ED] pt-6 sm:flex-row sm:justify-end">
                 <button
-                  className="inline-flex h-11 items-center justify-center rounded-lg border border-[#B9C7DA] bg-white px-5 text-sm font-bold text-[#40516C] transition-colors hover:bg-[#F4F7FB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8]"
+                  className="inline-flex h-11 items-center justify-center rounded-lg border border-[#B9C7DA] bg-white px-5 text-sm font-bold text-[#40516C] transition-colors hover:bg-[#F4F7FB] hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8]"
                   onClick={() => router.back()}
                   type="button"
                 >
                   Cancelar
                 </button>
                 <button
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#163A7B] px-5 text-sm font-bold text-white transition-colors hover:bg-[#112F66] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8]"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#163A7B] px-5 text-sm font-bold text-white transition-colors hover:bg-[#112F66] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] hover:cursor-pointer"
                   disabled={enviando}
                   type="submit"
                 >
