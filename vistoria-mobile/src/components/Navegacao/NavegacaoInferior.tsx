@@ -1,30 +1,49 @@
 import { ClipboardCheck, FileText, House } from 'lucide-react-native'
+import { type Href, useRouter } from 'expo-router'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { CoresVistoria } from '@/constants/theme'
 
-const itensNavegacao = [
-  { icone: House, selecionado: true, titulo: 'Home' },
-  { icone: ClipboardCheck, selecionado: false, titulo: 'Vistoria' },
-  { icone: FileText, selecionado: false, titulo: 'Documentos' },
-]
+interface INavegacaoInferiorProps {
+  abaAtiva: 'home' | 'vistoria' | 'documentos'
+}
 
-export function NavegacaoInferior() {
+interface IItemNavegacao {
+  destino?: Href
+  icone: typeof House
+  identificador: INavegacaoInferiorProps['abaAtiva']
+  titulo: string
+}
+
+const itensNavegacao = [
+  { destino: '/', icone: House, identificador: 'home', titulo: 'Home' },
+  { destino: '/vistoria', icone: ClipboardCheck, identificador: 'vistoria', titulo: 'Vistoria' },
+  { icone: FileText, identificador: 'documentos', titulo: 'Documentos' },
+] satisfies IItemNavegacao[]
+
+export function NavegacaoInferior({ abaAtiva }: INavegacaoInferiorProps) {
+  const router = useRouter()
+
   return (
     <View accessibilityRole="tablist" style={styles.navegacao}>
       {itensNavegacao.map((item) => {
         const Icone = item.icone
-        const cor = item.selecionado ? CoresVistoria.marca : CoresVistoria.textoAuxiliar
+        const selecionado = item.identificador === abaAtiva
+        const cor = selecionado ? CoresVistoria.marca : CoresVistoria.textoAuxiliar
 
         return (
           <Pressable
             accessibilityRole="tab"
-            accessibilityState={{ selected: item.selecionado }}
+            accessibilityState={{ selected: selecionado }}
             key={item.titulo}
-            onPress={() => {}}
+            onPress={() => {
+              if (item.destino) {
+                router.push(item.destino)
+              }
+            }}
             style={({ pressed }) => [styles.botao, pressed && styles.botaoPressionado]}>
             <Icone color={cor} size={24} strokeWidth={2} />
-            <Text style={[styles.texto, item.selecionado && styles.textoSelecionado]}>{item.titulo}</Text>
+            <Text style={[styles.texto, selecionado && styles.textoSelecionado]}>{item.titulo}</Text>
           </Pressable>
         )
       })}

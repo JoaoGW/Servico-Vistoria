@@ -60,7 +60,7 @@ export default function HomeScreen() {
           ) : null}
         </ScrollView>
 
-        <NavegacaoInferior />
+        <NavegacaoInferior abaAtiva="home" />
       </View>
     </SafeAreaView>
   );
