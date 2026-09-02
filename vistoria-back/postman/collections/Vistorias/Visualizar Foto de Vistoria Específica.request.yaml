@@ -1,5 +1,7 @@
 $kind: http-request
 name: Visualizar Foto de Vistoria Específica
-url: ""
+url: "{{localhost}}/vistorias/:id/foto"
 method: GET
+pathVariables:
+  id: ""
 order: 4102627540989445

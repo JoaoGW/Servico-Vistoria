@@ -32,7 +32,7 @@ export class DocumentosController {
   @Post()
   @UseInterceptors(
     FileInterceptor('file', {
-      limits: { fileSize: 25 * 1024 * 1024 },
+      limits: { fileSize: 10 * 1024 * 1024 },
       fileFilter: (_request, file, callback) =>
         callback(
           null,
@@ -59,7 +59,7 @@ export class DocumentosController {
   @Put()
   @UseInterceptors(
     FileInterceptor('file', {
-      limits: { fileSize: 25 * 1024 * 1024 },
+      limits: { fileSize: 10 * 1024 * 1024 },
       fileFilter: (_request, file, callback) =>
         callback(
           null,

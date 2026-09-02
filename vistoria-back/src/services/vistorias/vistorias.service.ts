@@ -6,14 +6,17 @@ import { vistorias } from '../../db/schema.js';
 export type CreateVistoriaDto = {
   userId: string;
   description: string;
-  latitude: number;
-  longitude: number;
-  pendente: boolean;
 };
 
 export type ImagemVistoria = {
   buffer: Buffer;
   mimetype: string;
+};
+
+export type UpdateVistoriaDto = {
+  pendente?: boolean;
+  latitude?: number;
+  longitude?: number;
 };
 
 @Injectable()
@@ -34,13 +37,13 @@ export class VistoriasService {
       .from(vistorias);
   }
 
-  async create(data: CreateVistoriaDto, photo: ImagemVistoria) {
+  async create(data: CreateVistoriaDto) {
     const [vistoria] = await db
       .insert(vistorias)
       .values({
-        ...data,
-        photo: photo.buffer,
-        photoMimeType: photo.mimetype,
+        userId: data.userId,
+        description: data.description,
+        pendente: true,
       })
       .returning({
         id: vistorias.id,
@@ -65,6 +68,34 @@ export class VistoriasService {
       })
       .from(vistorias)
       .where(eq(vistorias.id, id));
+
+    return vistoria;
+  }
+
+  async update(id: string, data: UpdateVistoriaDto, photo?: ImagemVistoria) {
+    const [vistoria] = await db
+      .update(vistorias)
+      .set({
+        ...(data.pendente !== undefined && { pendente: data.pendente }),
+        ...(data.latitude !== undefined && { latitude: data.latitude }),
+        ...(data.longitude !== undefined && { longitude: data.longitude }),
+        ...(photo && {
+          photo: photo.buffer,
+          photoMimeType: photo.mimetype,
+        }),
+      })
+      .where(eq(vistorias.id, id))
+      .returning({
+        id: vistorias.id,
+        userId: vistorias.userId,
+        description: vistorias.description,
+        photoMimeType: vistorias.photoMimeType,
+        latitude: vistorias.latitude,
+        longitude: vistorias.longitude,
+        pendente: vistorias.pendente,
+        createdAt: vistorias.createdAt,
+        updatedAt: vistorias.updatedAt,
+      });
 
     return vistoria;
   }

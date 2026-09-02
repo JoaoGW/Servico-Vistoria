@@ -1,0 +1,94 @@
+{
+  "templates": [
+    {
+      "title": "authentication",
+      "screens": [
+        "login-methods",
+        "login-email",
+        "otp-verification",
+        "create-password",
+        "forgot-password",
+        "biometric"
+      ]
+    },
+    {
+      "title": "onboarding",
+      "screens": ["image-focus", "feature-focus", "cta-focus"]
+    },
+    {
+      "title": "social",
+      "screens": [
+        "chat-screen-1",
+        "chat-screen-2",
+        "profile-page",
+        "gallery",
+        "media-gallery-picker",
+        "notifications-feed"
+      ]
+    },
+    {
+      "title": "dashboard",
+      "screens": [
+        "investment-dashboard",
+        "fitness-dashboard",
+        "finance-dashboard"
+      ]
+    },
+    {
+      "title": "ecommerce",
+      "screens": [
+        "shopping-cart",
+        "shopping-gallery",
+        "delivery-options",
+        "payment-method",
+        "product-details",
+        "user-profile",
+        "coupon-screen",
+        "address-book",
+        "order-tracking",
+        "customer-support-chat-bubble"
+      ]
+    },
+    {
+      "title": "testimonials",
+      "screens": ["customer-stories"]
+    },
+    {
+      "title": "pricing",
+      "screens": ["bundle-tier", "comparison-table", "security", "trial"]
+    },
+    { "title": "flyout-menu", "screens": ["flyout-menu-screen-1"] },
+    {
+      "title": "combobox",
+      "screens": ["combobox-screen-1", "combobox-with-drawer-and-modal"]
+    },
+    {
+      "title": "wallet",
+      "screens": ["topup-screen"]
+    },
+    {
+      "title": "utility",
+      "screens": [
+        "job-card",
+        "stock-graph",
+        "hotel-search",
+        "restaurant-detail",
+        "task-management",
+        "crypto-tracker",
+        "circular-progress"
+      ]
+    },
+    {
+      "title": "settings",
+      "screens": [
+        "user-subscription-management",
+        "credit-card-input",
+        "shipping-address-management-list"
+      ]
+    },
+    {
+      "title": "media",
+      "screens": ["video-player-fullscreen", "music-player"]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+$kind: http-request
+name: Atualizar Status / Foto de Vistoria
+url: "{{localhost}}/vistorias/:id"
+method: PUT
+pathVariables:
+  id: ""
+order: 4454638700043809

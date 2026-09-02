@@ -1,5 +1,16 @@
 $kind: http-request
 name: Cadastrar Usuário
-url: ""
-method: GET
+url: "{{localhost}}/usuarios"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "email": "desafio@peacore.com",
+      "password": "peacore123"
+    }
+scripts:
+  - type: afterResponse
+    code: pm.collectionVariables.set('userId', pm.response.json().id);
+    language: text/javascript
 order: 1958909696955473

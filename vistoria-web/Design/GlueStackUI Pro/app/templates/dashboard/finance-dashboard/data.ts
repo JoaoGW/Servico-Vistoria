@@ -1,0 +1,152 @@
+import {
+  Transaction,
+  ChartDataPoint,
+  FinanceOverview,
+  CategorySummary,
+} from "./types";
+
+export const mockFinanceOverview: FinanceOverview = {
+  totalBalance: 125430.5,
+  monthlyIncome: 8500.0,
+  monthlyExpenses: 4200.0,
+  savings: 4300.0,
+  balanceChange: 1250.75,
+  balanceChangePercentage: 1.01,
+};
+
+export const mockChartData: ChartDataPoint[] = [
+  { date: "Jan", value: 115000 },
+  { date: "Feb", value: 118500 },
+  { date: "Mar", value: 120200 },
+  { date: "Apr", value: 122800 },
+  { date: "May", value: 121500 },
+  { date: "Jun", value: 124200 },
+  { date: "Jul", value: 125430 },
+];
+
+export const mockTransactions: Transaction[] = [
+  {
+    id: "1",
+    type: "income",
+    category: "Salary",
+    description: "Monthly salary deposit",
+    amount: 8500.0,
+    date: "2024-01-15",
+    icon: "dollar-sign",
+  },
+  {
+    id: "2",
+    type: "expense",
+    category: "Groceries",
+    description: "Weekly grocery shopping",
+    amount: 125.5,
+    date: "2024-01-14",
+    icon: "shopping-cart",
+  },
+  {
+    id: "3",
+    type: "expense",
+    category: "Rent",
+    description: "Monthly rent payment",
+    amount: 2200.0,
+    date: "2024-01-01",
+    icon: "home",
+  },
+  {
+    id: "4",
+    type: "expense",
+    category: "Utilities",
+    description: "Electricity and water bill",
+    amount: 180.75,
+    date: "2024-01-10",
+    icon: "zap",
+  },
+  {
+    id: "5",
+    type: "income",
+    category: "Freelance",
+    description: "Web development project",
+    amount: 1200.0,
+    date: "2024-01-12",
+    icon: "laptop",
+  },
+  {
+    id: "6",
+    type: "expense",
+    category: "Transportation",
+    description: "Gas and public transport",
+    amount: 85.25,
+    date: "2024-01-13",
+    icon: "car",
+  },
+  {
+    id: "7",
+    type: "expense",
+    category: "Entertainment",
+    description: "Movie tickets and dinner",
+    amount: 65.0,
+    date: "2024-01-11",
+    icon: "film",
+  },
+  {
+    id: "8",
+    type: "expense",
+    category: "Healthcare",
+    description: "Doctor visit and medication",
+    amount: 150.0,
+    date: "2024-01-09",
+    icon: "heart",
+  },
+];
+
+export const mockCategorySummary: CategorySummary[] = [
+  {
+    category: "Rent",
+    amount: 2200.0,
+    percentage: 52.4,
+    icon: "home",
+    color: "text-primary-500",
+  },
+  {
+    category: "Groceries",
+    amount: 502.0,
+    percentage: 12.0,
+    icon: "shopping-cart",
+    color: "text-success-500",
+  },
+  {
+    category: "Transportation",
+    amount: 340.0,
+    percentage: 8.1,
+    icon: "car",
+    color: "text-warning-500",
+  },
+  {
+    category: "Utilities",
+    amount: 180.75,
+    percentage: 4.3,
+    icon: "zap",
+    color: "text-info-500",
+  },
+  {
+    category: "Entertainment",
+    amount: 260.0,
+    percentage: 6.2,
+    icon: "film",
+    color: "text-purple-500",
+  },
+  {
+    category: "Healthcare",
+    amount: 150.0,
+    percentage: 3.6,
+    icon: "heart",
+    color: "text-error-500",
+  },
+  {
+    category: "Others",
+    amount: 567.25,
+    percentage: 13.5,
+    icon: "more-horizontal",
+    color: "text-typography-500",
+  },
+];

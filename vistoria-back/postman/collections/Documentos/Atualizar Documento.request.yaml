@@ -1,5 +1,5 @@
 $kind: http-request
 name: Atualizar Documento
-url: ""
-method: GET
+url: "{{localhost}}/documentos"
+method: PUT
 order: 4467141349686424

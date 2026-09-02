@@ -1,5 +1,7 @@
 $kind: http-request
 name: Deletar Vistoria
-url: ""
-method: GET
+url: "{{localhost}}/vistorias/:id"
+method: DELETE
+pathVariables:
+  id: ""
 order: 3818851092252576

@@ -1,5 +1,7 @@
 $kind: http-request
 name: Deletar Documento
-url: ""
-method: GET
+url: "{{localhost}}/documentos/:id"
+method: DELETE
+pathVariables:
+  id: ""
 order: 4478961487325333
