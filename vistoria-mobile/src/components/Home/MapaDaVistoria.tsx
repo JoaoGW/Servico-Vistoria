@@ -1,40 +1,19 @@
 import { MapPinned } from 'lucide-react-native'
-import { StyleSheet, Text, View } from 'react-native'
 
-import { CoresVistoria } from '@/constants/theme'
+import { Box } from '@/components/ui/box'
+import { Icon } from '@/components/ui/icon'
+import { Text } from '@/components/ui/text'
 
 export function MapaDaVistoria() {
   return (
-    <View accessibilityLabel="Área reservada para o mapa da vistoria" style={styles.mapa}>
-      <MapPinned color={CoresVistoria.marca} size={36} strokeWidth={1.75} />
-      <Text style={styles.titulo}>Mapa da vistoria</Text>
-      <Text style={styles.descricao}>A localização será exibida aqui.</Text>
-    </View>
+    <Box
+      accessibilityLabel="Área reservada para o mapa da vistoria"
+      className="min-h-[420px] flex-1 items-center justify-center border-y border-vistoria-borda bg-vistoria-fundo px-6">
+      <Icon as={MapPinned} className="text-vistoria-marca" size="xl" />
+      <Text className="mt-3 text-xl font-bold text-vistoria-titulo">Mapa da vistoria</Text>
+      <Text className="mt-2 text-center text-base text-vistoria-auxiliar">
+        A localização será exibida aqui.
+      </Text>
+    </Box>
   )
 }
-
-const styles = StyleSheet.create({
-  mapa: {
-    alignItems: 'center',
-    backgroundColor: CoresVistoria.fundo,
-    borderBottomColor: CoresVistoria.borda,
-    borderBottomWidth: 1,
-    borderTopColor: CoresVistoria.borda,
-    borderTopWidth: 1,
-    height: 312,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  titulo: {
-    color: CoresVistoria.titulo,
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: 12,
-  },
-  descricao: {
-    color: CoresVistoria.textoAuxiliar,
-    fontSize: 16,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-})

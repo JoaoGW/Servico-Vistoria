@@ -1,7 +1,8 @@
 import { CircleCheck } from 'lucide-react-native'
-import { Pressable, StyleSheet, Text } from 'react-native'
 
-import { CoresVistoria } from '@/constants/theme'
+import { Icon } from '@/components/ui/icon'
+import { Pressable } from '@/components/ui/pressable'
+import { Text } from '@/components/ui/text'
 
 interface IBotaoConcluirVistoriaProps {
   possuiVistoriaAtiva: boolean
@@ -15,29 +16,9 @@ export function BotaoConcluirVistoria({ possuiVistoriaAtiva }: IBotaoConcluirVis
       accessibilityLabel={texto}
       accessibilityRole="button"
       onPress={() => {}}
-      style={({ pressed }) => [styles.botao, pressed && styles.botaoPressionado]}>
-      <CircleCheck color={CoresVistoria.superficie} size={24} strokeWidth={2.5} />
-      <Text style={styles.texto}>{texto}</Text>
+      className="h-14 flex-row items-center justify-center rounded-xl bg-vistoria-marca gap-3 data-[active=true]:bg-vistoria-marca-pressionada">
+      <Icon as={CircleCheck} className="text-white" size="xl" />
+      <Text className="text-lg font-bold text-white">{texto}</Text>
     </Pressable>
   )
 }
-
-const styles = StyleSheet.create({
-  botao: {
-    alignItems: 'center',
-    backgroundColor: CoresVistoria.marca,
-    borderRadius: 12,
-    flexDirection: 'row',
-    gap: 12,
-    height: 56,
-    justifyContent: 'center',
-  },
-  botaoPressionado: {
-    backgroundColor: CoresVistoria.marcaPressionada,
-  },
-  texto: {
-    color: CoresVistoria.superficie,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-})
