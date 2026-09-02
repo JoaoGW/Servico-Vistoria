@@ -42,7 +42,7 @@ function FileTypeBadge({ fileMimeType }: Pick<Documento, 'fileMimeType'>) {
   return (
     <span
       className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-bold tracking-wide ${
-        isPdf ? 'border-[#F5B7B7] bg-[#FFF5F5] text-[#C9353D]' : 'border-[#B7D4F7] bg-[#F2F8FF] text-[#1E5BA8]'
+        isPdf ? 'border-[#F5B7B7] text-[#C9353D]' : 'border-[#B7D4F7] text-[#1E5BA8]'
       }`}
     >
       {formatarTipoArquivo(fileMimeType)}

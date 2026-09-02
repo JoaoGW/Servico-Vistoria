@@ -1,11 +1,11 @@
 'use client'
 import { useEffect, useState } from 'react'
 
-
 import PagesCommomSidebar from '@/components/PagesCommomSidebar'
 import OverviewCard from '@/components/Dashboard/OverviewCard'
 import { NovaVistoriaButton } from '@/components/Buttons/NovaVistoriaButton'
 import { NovoDocumentoButton } from '@/components/Buttons/NovoDocumentoButton'
+import DocumentosTable, { type Documento } from '@/components/Tables/DocumentosTable'
 
 interface Vistoria {
   id: string
@@ -64,12 +64,36 @@ const visualizarVistorias = async (token: string) => {
   }
 }
 
+/**
+ * Busca todos os documentos disponíveis para o usuário autenticado.
+ *
+ * @param token - Token JWT usado na autorização da requisição.
+ * @returns Retorna a lista de documentos cadastrados.
+ * @throws Will throw an error if the request fails or the response is not successful.
+ */
+const visualizarDocumentos = async (token: string) => {
+  const response = await fetch('/api/documentos', {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error('Não foi possível recuperar os documentos.')
+  }
+
+  return response.json() as Promise<Documento[]>
+}
+
 export default function Dashboard() {
   const [vistorias, setVistorias] = useState<Vistoria[]>([])
+  const [documentos, setDocumentos] = useState<Documento[]>([])
   const [mensagemErro, setMensagemErro] = useState<string>('')
   const [carregando, setCarregando] = useState<boolean>(true)
   const [sidebarRecolhida, setSidebarRecolhida] = useState<boolean>(false)
 
+  // Para solicitar as vistorias à API
   useEffect(() => {
     const token = sessionStorage.getItem('accessToken')
     const requisicao = token
@@ -81,6 +105,19 @@ export default function Dashboard() {
       .catch((error: Error) => setMensagemErro(error.message))
       .finally(() => setCarregando(false))
   }, [])
+
+  // Para solicitar os documentos à API
+  useEffect(() => {
+      const token = sessionStorage.getItem('accessToken')
+      const requisicao = token
+        ? visualizarDocumentos(token)
+        : Promise.reject(new Error('Sua sessão não foi encontrada. Entre novamente para acessar os documentos.'))
+
+      void requisicao
+        .then((dados) => setDocumentos(dados))
+        .catch((error: unknown) => setMensagemErro(error instanceof Error ? error.message : 'Não foi possível recuperar os documentos.'))
+        .finally(() => setCarregando(false))
+    }, [])
 
   const vistoriasRecentes = [...vistorias].sort(
     (primeira, segunda) => new Date(segunda.updatedAt).getTime() - new Date(primeira.updatedAt).getTime(),
@@ -210,18 +247,23 @@ export default function Dashboard() {
               </>
             ) : null}
 
-            <section className="scroll-mt-6 mt-6 border-y border-[#DDE3ED] py-6 sm:flex sm:items-center sm:justify-between sm:gap-8" id="documentos">
+            <section className="scroll-mt-6 mt-6" id="documentos">
               <div>
                 <p className="text-sm font-semibold text-[#1E5BA8]">DOCUMENTOS</p>
                 <h3 className="mt-2 text-xl font-bold tracking-tight text-[#1E274A]">Documentos vinculados às vistorias</h3>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[#687076]">
-                  A área de documentos estará disponível para consultar e organizar os arquivos relacionados às vistorias.
+                  Consulte e organize os arquivos relacionados às vistorias.
                 </p>
+              </div>
+
+              {!carregando && !mensagemErro && documentos.length ? <DocumentosTable documentos={documentos} /> : null}
+
+              {!carregando && !mensagemErro && !documentos.length ? (
                 <p className="mt-4 flex items-center gap-2 text-sm font-medium text-[#687076]">
                   <span aria-hidden="true" className="h-2 w-2 rounded-full bg-[#AEBBD2]" />
                   Nenhum documento cadastrado.
                 </p>
-              </div>
+              ) : null}
             </section>
           </div>
         </section>
