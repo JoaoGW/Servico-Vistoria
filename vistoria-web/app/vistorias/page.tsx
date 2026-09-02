@@ -144,35 +144,29 @@ export default function Vistorias() {
               </div>
             </section>
 
-            <section aria-labelledby="lista-vistorias-title" className="mt-6 overflow-hidden rounded-2xl border border-[#DDE3ED] bg-white shadow-[0_8px_24px_rgba(30,39,74,0.06)]">
-              <div className="border-b border-[#DDE3ED] px-5 py-5 sm:px-6">
-                <h3 className="text-xl font-bold tracking-tight text-[#1E274A]" id="lista-vistorias-title">Lista de vistorias</h3>
-              </div>
+            {carregando ? (
+              <section className="mt-10 rounded-xl border border-[#DDE3ED] bg-white px-5 py-12 shadow-[0_8px_24px_rgba(30,39,74,0.06)] sm:px-6">
+                <p className="text-base text-[#687076]" role="status">Carregando vistorias...</p>
+              </section>
+            ) : null}
 
-              {carregando ? (
-                <p className="px-6 py-12 text-base text-[#687076]" role="status">Carregando vistorias...</p>
-              ) : null}
+            {mensagemErro ? (
+              <section className="mt-10 border-l-4 border-[#C8353F] bg-white px-6 py-5 text-[#7C252D] shadow-[0_8px_24px_rgba(30,39,74,0.06)]" role="alert">
+                <p className="font-semibold">Não foi possível carregar as vistorias</p>
+                <p className="mt-1 text-sm leading-6">{mensagemErro}</p>
+              </section>
+            ) : null}
 
-              {mensagemErro ? (
-                <div className="border-l-4 border-[#C8353F] px-6 py-5 text-[#7C252D]" role="alert">
-                  <p className="font-semibold">Não foi possível carregar as vistorias</p>
-                  <p className="mt-1 text-sm leading-6">{mensagemErro}</p>
-                </div>
-              ) : null}
+            {!carregando && !mensagemErro && vistoriasFiltradas.length ? <VistoriasTable vistorias={vistoriasFiltradas} /> : null}
 
-              {!carregando && !mensagemErro && vistoriasFiltradas.length ? (
-                <VistoriasTable vistorias={vistoriasFiltradas} />
-              ) : null}
-
-              {!carregando && !mensagemErro && !vistoriasFiltradas.length ? (
-                <div className="px-6 py-12">
-                  <p className="font-semibold text-[#1E274A]">Nenhuma vistoria encontrada</p>
-                  <p className="mt-2 text-sm leading-6 text-[#687076]">
-                    Ajuste os filtros ou cadastre uma nova vistoria para iniciar o acompanhamento.
-                  </p>
-                </div>
-              ) : null}
-            </section>
+            {!carregando && !mensagemErro && !vistoriasFiltradas.length ? (
+              <section className="mt-10 rounded-xl border border-[#DDE3ED] bg-white px-5 py-12 shadow-[0_8px_24px_rgba(30,39,74,0.06)] sm:px-6">
+                <p className="font-semibold text-[#1E274A]">Nenhuma vistoria encontrada</p>
+                <p className="mt-2 text-sm leading-6 text-[#687076]">
+                  Ajuste os filtros ou cadastre uma nova vistoria para iniciar o acompanhamento.
+                </p>
+              </section>
+            ) : null}
           </div>
         </section>
       </main>
