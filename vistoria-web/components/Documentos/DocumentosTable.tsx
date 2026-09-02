@@ -8,36 +8,7 @@ interface Documento {
   title: string
 }
 
-const documentos: Documento[] = [
-  {
-    id: 'DOC-001',
-    title: 'Laudo de Instalação — Banco Nacional',
-    fileName: 'laudo-instalacao-banco-nacional.pdf',
-    fileMimeType: 'application/pdf',
-    createdAt: '31/08/2026',
-  },
-  {
-    id: 'DOC-002',
-    title: 'Termo de Conclusão — Telemar',
-    fileName: 'termo-conclusao-telemar.docx',
-    fileMimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    createdAt: '31/08/2026',
-  },
-  {
-    id: 'DOC-003',
-    title: 'Relatório de Manutenção — Pão e Sal',
-    fileName: 'relatorio-manutencao-pao-e-sal.pdf',
-    fileMimeType: 'application/pdf',
-    createdAt: '30/08/2026',
-  },
-  {
-    id: 'DOC-004',
-    title: 'Laudo VoIP — Clínica Santa Luzia',
-    fileName: 'laudo-voip-clinica-santa-luzia.pdf',
-    fileMimeType: 'application/pdf',
-    createdAt: '29/08/2026',
-  },
-]
+const documentos: Documento[] = []
 
 const formatarTipoArquivo = (fileMimeType: Documento['fileMimeType']) => (fileMimeType === 'application/pdf' ? 'PDF' : 'DOCX')
 
@@ -104,7 +75,7 @@ export default function DocumentosTable() {
         </table>
       </div>
 
-      <p className="border-t border-[#DDE3ED] px-5 py-4 text-sm text-[#8A99AF] sm:px-6">4 documentos exibidos</p>
+      <p className="border-t border-[#DDE3ED] px-5 py-4 text-sm text-[#8A99AF] sm:px-6">{documentos.length} documentos exibidos</p>
     </section>
   )
 }

@@ -1,16 +1,18 @@
 'use client'
-
 import { useEffect, useState } from 'react'
+
 import { useRouter } from 'next/navigation'
 
 import PagesCommomSidebar from '@/components/PagesCommomSidebar'
 import OverviewCard from '@/components/Dashboard/OverviewCard'
+import { NovaVistoriaButton } from '@/components/Buttons/NovaVistoriaButton'
+import { NovoDocumentoButton } from '@/components/Buttons/NovoDocumentoButton'
 
 interface Vistoria {
   id: string
   description: string
-  latitude: number
-  longitude: number
+  latitude: number | null
+  longitude: number | null
   pendente: boolean
   createdAt: string
   updatedAt: string
@@ -125,18 +127,8 @@ export default function Dashboard() {
               </div>
 
               <div className="flex flex-wrap gap-3 lg:shrink-0">
-                <button
-                  className="inline-flex h-11 items-center justify-center rounded-lg bg-[#1E274A] px-5 text-sm font-bold text-white transition-colors hover:bg-[#151C36] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] active:bg-[#11172C]"
-                  type="button"
-                >
-                  + Nova vistoria
-                </button>
-                <button
-                  className="inline-flex h-11 items-center justify-center rounded-lg border border-[#8FC2FF] bg-white px-5 text-sm font-bold text-[#1E274A] transition-colors hover:border-[#1E5BA8] hover:bg-[#EFF6FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] active:bg-[#E3EFFD]"
-                  type="button"
-                >
-                  + Novo documento
-                </button>
+                <NovaVistoriaButton />
+                <NovoDocumentoButton />
               </div>
             </div>
 

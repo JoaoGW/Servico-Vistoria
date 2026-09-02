@@ -35,10 +35,21 @@ npx drizzle-kit push
 O cliente do banco está em `src/db/index.ts`; importe `db` e as tabelas de
 `src/db/schema.ts` nos services que implementar.
 
-## Upload e acesso a arquivos
+## Vistorias
 
-As vistorias recebem uma imagem no campo `photo` em `multipart/form-data`.
-Use `GET /vistorias/:id/foto` para visualizá-la.
+O cadastro web envia `POST /vistorias` em JSON com `userId` e `description`.
+Toda vistoria é criada com `pendente: true`.
+
+O aplicativo mobile deve usar `PUT /vistorias/:id` em `multipart/form-data`
+para registrar `latitude`, `longitude` e a imagem no campo `photo`. Latitude e
+longitude devem ser enviadas juntas; a imagem aceita apenas arquivos de imagem
+de até 10 MB. Use `GET /vistorias/:id/foto` para visualizar uma foto já
+cadastrada.
+
+As listagens de vistorias retornam apenas os metadados das imagens, não o
+conteúdo binário.
+
+## Documentos
 
 Documentos recebem um arquivo PDF ou DOCX no campo `file`, também em
 `multipart/form-data`. Use `GET /documentos/:id/arquivo` para baixá-lo.

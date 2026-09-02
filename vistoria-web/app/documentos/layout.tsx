@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 
 export const metadata: Metadata = {
   title: 'Documentos | Desafio Peacore',
-  description: 'Consulta e envio de documentos da plataforma Peacore Vistorias.',
+  description: 'Consulta e envio de documentos da plataforma Peacore Vistorias | Desafio Técnico da Peacore',
 }
 
 export default function DocumentosLayout({ children }: { children: ReactNode }) {

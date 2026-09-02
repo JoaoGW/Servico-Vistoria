@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-type ActiveNavigationItem = 'dashboard' | 'documents' | 'new-technician'
+type ActiveNavigationItem = 'dashboard' | 'vistorias' | 'documents' | 'novo_tecnico'
 
 interface PagesCommomSidebarProps {
   activeItem?: ActiveNavigationItem
@@ -88,8 +88,9 @@ export default function PagesCommomSidebar({
             }
           />
           <NavigationItem
+            active={activeItem === 'vistorias'}
             collapsed={collapsed}
-            href="/dashboard#vistorias"
+            href="/vistorias"
             label="Vistorias"
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20">
@@ -110,7 +111,7 @@ export default function PagesCommomSidebar({
             }
           />
           <NavigationItem
-            active={activeItem === 'new-technician'}
+            active={activeItem === 'novo_tecnico'}
             collapsed={collapsed}
             href="#cadastro"
             label="Novo Técnico"

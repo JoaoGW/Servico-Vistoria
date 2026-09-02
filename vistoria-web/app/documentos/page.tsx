@@ -1,25 +1,56 @@
 'use client'
 
-import DocumentosPageShell from '@/components/Documentos/DocumentosPageShell'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+
+import { NovoDocumentoButton } from '@/components/Buttons/NovoDocumentoButton'
 import DocumentosTable from '@/components/Documentos/DocumentosTable'
+import PagesCommomSidebar from '@/components/PagesCommomSidebar'
 
 export default function DocumentosPage() {
+  const router = useRouter()
+  const [sidebarRecolhida, setSidebarRecolhida] = useState(false)
+
+  const sair = () => {
+    sessionStorage.removeItem('accessToken')
+    router.replace('/')
+  }
+
   return (
-    <DocumentosPageShell
-      action={
-        <button
-          className="inline-flex h-14 items-center justify-center gap-2 rounded-lg bg-[#163A7B] px-6 text-base font-bold text-white shadow-sm transition-colors hover:bg-[#112F66] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8]"
-          onClick={() => {}}
-          type="button"
-        >
-          <span aria-hidden="true" className="text-xl leading-none">+</span>
-          Novo documento
-        </button>
-      }
-      description="Consulte os arquivos cadastrados na plataforma."
-      title="Documentos"
+    <div
+      className={`min-h-dvh bg-[#F2F4F8] text-[#11181C] lg:grid ${
+        sidebarRecolhida ? 'lg:grid-cols-[5.5rem_minmax(0,1fr)]' : 'lg:grid-cols-[21rem_minmax(0,1fr)]'
+      }`}
     >
-      <DocumentosTable />
-    </DocumentosPageShell>
+      <PagesCommomSidebar
+        activeItem="documents"
+        collapsed={sidebarRecolhida}
+        onLogout={sair}
+        onToggle={() => setSidebarRecolhida((recolhida) => !recolhida)}
+      />
+
+      <main className="min-w-0">
+        <header className="flex min-h-20 items-center border-b border-[#DDE3ED] bg-white px-6 py-4 sm:px-8 lg:px-10">
+          <div>
+            <p className="text-sm font-semibold text-[#1E5BA8]">PEACORE</p>
+            <h1 className="mt-1 text-xl font-bold tracking-tight text-[#1E274A]">Documentos</h1>
+          </div>
+        </header>
+
+        <section className="px-6 py-8 sm:px-8 lg:px-10">
+          <div className="mx-auto max-w-7xl">
+            <div className="flex flex-col gap-5 border-b border-[#DDE3ED] pb-6 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight text-[#1E274A]">Documentos</h2>
+                <p className="mt-2 text-base leading-6 text-[#687076]">Consulte os arquivos cadastrados na plataforma.</p>
+              </div>
+              <NovoDocumentoButton />
+            </div>
+
+            <DocumentosTable />
+          </div>
+        </section>
+      </main>
+    </div>
   )
 }
