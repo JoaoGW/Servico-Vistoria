@@ -1,6 +1,6 @@
 'use client'
 
-interface Documento {
+export interface Documento {
   createdAt: string
   fileMimeType: 'application/pdf' | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   fileName: string
@@ -8,7 +8,9 @@ interface Documento {
   title: string
 }
 
-const documentos: Documento[] = []
+interface DocumentoTableProps {
+  documentos: Documento[]
+}
 
 const formatarTipoArquivo = (fileMimeType: Documento['fileMimeType']) => (fileMimeType === 'application/pdf' ? 'PDF' : 'DOCX')
 
@@ -29,7 +31,7 @@ function FileTypeBadge({ fileMimeType }: Pick<Documento, 'fileMimeType'>) {
 /**
  * Apresenta uma lista estática de documentos para a composição visual da tela.
  */
-export default function DocumentosTable() {
+export default function DocumentosTable({ documentos }: DocumentoTableProps) {
   return (
     <section className="mt-10 overflow-hidden rounded-xl border border-[#DDE3ED] bg-white shadow-[0_8px_24px_rgba(30,39,74,0.06)]">
       <div className="border-b border-[#DDE3ED] px-5 py-4 sm:px-6">

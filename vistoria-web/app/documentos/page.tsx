@@ -1,13 +1,49 @@
 'use client'
-import { useState } from 'react'
-
+import { useEffect, useState } from 'react'
 
 import { NovoDocumentoButton } from '@/components/Buttons/NovoDocumentoButton'
-import DocumentosTable from '@/components/Documentos/DocumentosTable'
+import DocumentosTable, { type Documento } from '@/components/Tables/DocumentosTable'
 import PagesCommomSidebar from '@/components/PagesCommomSidebar'
 
+/**
+ * Busca todos os documentos disponíveis para o usuário autenticado.
+ *
+ * @param token - Token JWT usado na autorização da requisição.
+ * @returns Retorna a lista de documentos cadastrados.
+ * @throws Will throw an error if the request fails or the response is not successful.
+ */
+const visualizarDocumentos = async (token: string) => {
+  const response = await fetch('/api/documentos', {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error('Não foi possível recuperar os documentos.')
+  }
+
+  return response.json() as Promise<Documento[]>
+}
+
 export default function DocumentosPage() {
+  const [documentos, setDocumentos] = useState<Documento[]>([])
   const [sidebarRecolhida, setSidebarRecolhida] = useState<boolean>(false)
+  const [carregando, setCarregando] = useState<boolean>(true)
+  const [mensagemErro, setMensagemErro] = useState<string>('')
+
+  useEffect(() => {
+      const token = sessionStorage.getItem('accessToken')
+      const requisicao = token
+        ? visualizarDocumentos(token)
+        : Promise.reject(new Error('Sua sessão não foi encontrada. Entre novamente para acessar os documentos.'))
+  
+      void requisicao
+        .then((dados) => setDocumentos(dados))
+        .catch((error: unknown) => setMensagemErro(error instanceof Error ? error.message : 'Não foi possível recuperar as vistorias.'))
+        .finally(() => setCarregando(false))
+    }, [])
 
   return (
     <div
@@ -39,7 +75,7 @@ export default function DocumentosPage() {
               <NovoDocumentoButton />
             </div>
 
-            <DocumentosTable />
+            <DocumentosTable documentos={documentos} />
           </div>
         </section>
       </main>
