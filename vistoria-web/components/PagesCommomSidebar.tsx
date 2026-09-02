@@ -1,9 +1,15 @@
+'use client'
+
 import type { ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
+
+import { sair } from '@/utils/Sair'
+
+type ActiveNavigationItem = 'dashboard' | 'vistorias' | 'documents' | 'novo_tecnico'
 
 interface PagesCommomSidebarProps {
-  activeItem?: 'dashboard' | 'vistorias'
+  activeItem?: ActiveNavigationItem
   collapsed: boolean
-  onLogout: () => void
   onToggle: () => void
 }
 
@@ -33,7 +39,13 @@ function NavigationItem({ active = false, collapsed, href, icon, label }: Naviga
   )
 }
 
-export default function PagesCommomSidebar({ activeItem = 'dashboard', collapsed, onLogout, onToggle }: PagesCommomSidebarProps) {
+export default function PagesCommomSidebar({
+  activeItem = 'dashboard',
+  collapsed,
+  onToggle,
+}: PagesCommomSidebarProps) {
+  const router = useRouter()
+
   return (
     <aside
       className={`hidden min-h-dvh flex-col bg-[#1E274A] text-[#ECEDEE] transition-[width] duration-200 lg:flex ${
@@ -92,8 +104,9 @@ export default function PagesCommomSidebar({ activeItem = 'dashboard', collapsed
             }
           />
           <NavigationItem
+            active={activeItem === 'documents'}
             collapsed={collapsed}
-            href="/dashboard#documentos"
+            href="/documentos"
             label="Documentos"
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20">
@@ -103,6 +116,7 @@ export default function PagesCommomSidebar({ activeItem = 'dashboard', collapsed
             }
           />
           <NavigationItem
+            active={activeItem === 'novo_tecnico'}
             collapsed={collapsed}
             href="#cadastro"
             label="Novo Técnico"
@@ -129,7 +143,7 @@ export default function PagesCommomSidebar({ activeItem = 'dashboard', collapsed
           className={`mt-4 flex min-h-11 items-center gap-3 rounded-lg text-sm font-semibold text-[#C6D0E5] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#69B3FF] ${
             collapsed ? 'w-full justify-center px-3' : 'w-full px-3'
           }`}
-          onClick={onLogout}
+          onClick={() => sair(router)}
           title={collapsed ? 'Sair' : undefined}
           type="button"
         >

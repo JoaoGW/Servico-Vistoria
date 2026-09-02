@@ -1,18 +1,9 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
 
-import { useRouter } from 'next/navigation'
-
 import PagesCommomSidebar from '@/components/PagesCommomSidebar'
 import { NovaVistoriaButton } from '@/components/Buttons/NovaVistoriaButton'
-
-interface Vistoria {
-  id: string
-  description: string
-  pendente: boolean
-  createdAt: string
-  updatedAt: string
-}
+import VistoriasTable, { type Vistoria } from '@/components/Tables/VistoriasTable'
 
 type FiltroStatus = 'todas' | 'pendentes' | 'concluidas'
 
@@ -21,20 +12,6 @@ const filtros: { label: string; value: FiltroStatus }[] = [
   { label: 'Pendentes', value: 'pendentes' },
   { label: 'Concluídas', value: 'concluidas' },
 ]
-
-const formatarData = (valor: string) => {
-  const data = new Date(valor)
-
-  if (Number.isNaN(data.getTime())) {
-    return 'Data indisponível'
-  }
-
-  return data.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
-}
 
 /**
  * Busca todas as vistorias disponíveis para o usuário autenticado.
@@ -59,13 +36,12 @@ const visualizarVistorias = async (token: string) => {
 }
 
 export default function Vistorias() {
-  const router = useRouter()
   const [vistorias, setVistorias] = useState<Vistoria[]>([])
-  const [carregando, setCarregando] = useState(true)
-  const [mensagemErro, setMensagemErro] = useState('')
+  const [carregando, setCarregando] = useState<boolean>(true)
+  const [mensagemErro, setMensagemErro] = useState<string>('')
   const [filtroAtivo, setFiltroAtivo] = useState<FiltroStatus>('todas')
-  const [busca, setBusca] = useState('')
-  const [sidebarRecolhida, setSidebarRecolhida] = useState(false)
+  const [busca, setBusca] = useState<string>('')
+  const [sidebarRecolhida, setSidebarRecolhida] = useState<boolean>(false)
 
   useEffect(() => {
     const token = sessionStorage.getItem('accessToken')
@@ -92,11 +68,6 @@ export default function Vistorias() {
       .sort((primeira, segunda) => new Date(segunda.createdAt).getTime() - new Date(primeira.createdAt).getTime())
   }, [busca, filtroAtivo, vistorias])
 
-  const sair = () => {
-    sessionStorage.removeItem('accessToken')
-    router.replace('/')
-  }
-
   return (
     <div
       className={`min-h-dvh bg-[#F2F4F8] text-[#11181C] lg:grid ${
@@ -106,7 +77,6 @@ export default function Vistorias() {
       <PagesCommomSidebar
         activeItem="vistorias"
         collapsed={sidebarRecolhida}
-        onLogout={sair}
         onToggle={() => setSidebarRecolhida((recolhida) => !recolhida)}
       />
 
@@ -174,62 +144,29 @@ export default function Vistorias() {
               </div>
             </section>
 
-            <section aria-labelledby="lista-vistorias-title" className="mt-6 overflow-hidden rounded-2xl border border-[#DDE3ED] bg-white shadow-[0_8px_24px_rgba(30,39,74,0.06)]">
-              <div className="border-b border-[#DDE3ED] px-5 py-5 sm:px-6">
-                <h3 className="text-xl font-bold tracking-tight text-[#1E274A]" id="lista-vistorias-title">Lista de vistorias</h3>
-              </div>
+            {carregando ? (
+              <section className="mt-10 rounded-xl border border-[#DDE3ED] bg-white px-5 py-12 shadow-[0_8px_24px_rgba(30,39,74,0.06)] sm:px-6">
+                <p className="text-base text-[#687076]" role="status">Carregando vistorias...</p>
+              </section>
+            ) : null}
 
-              {carregando ? (
-                <p className="px-6 py-12 text-base text-[#687076]" role="status">Carregando vistorias...</p>
-              ) : null}
+            {mensagemErro ? (
+              <section className="mt-10 border-l-4 border-[#C8353F] bg-white px-6 py-5 text-[#7C252D] shadow-[0_8px_24px_rgba(30,39,74,0.06)]" role="alert">
+                <p className="font-semibold">Não foi possível carregar as vistorias</p>
+                <p className="mt-1 text-sm leading-6">{mensagemErro}</p>
+              </section>
+            ) : null}
 
-              {mensagemErro ? (
-                <div className="border-l-4 border-[#C8353F] px-6 py-5 text-[#7C252D]" role="alert">
-                  <p className="font-semibold">Não foi possível carregar as vistorias</p>
-                  <p className="mt-1 text-sm leading-6">{mensagemErro}</p>
-                </div>
-              ) : null}
+            {!carregando && !mensagemErro && vistoriasFiltradas.length ? <VistoriasTable vistorias={vistoriasFiltradas} /> : null}
 
-              {!carregando && !mensagemErro && vistoriasFiltradas.length ? (
-                <div className="overflow-x-auto">
-                  <table className="min-w-[52rem] w-full border-collapse text-left">
-                    <thead className="bg-[#1E274A] text-sm font-semibold text-white">
-                      <tr>
-                        <th className="px-5 py-4 sm:px-6" scope="col">Identificador</th>
-                        <th className="px-5 py-4 sm:px-6" scope="col">Descrição</th>
-                        <th className="px-5 py-4 sm:px-6" scope="col">Status</th>
-                        <th className="px-5 py-4 sm:px-6" scope="col">Criada em</th>
-                        <th className="px-5 py-4 sm:px-6" scope="col">Atualizada em</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#DDE3ED] text-sm text-[#11181C]">
-                      {vistoriasFiltradas.map((vistoria) => (
-                        <tr className="hover:bg-[#F8FAFC]" key={vistoria.id}>
-                          <td className="whitespace-nowrap px-5 py-4 font-mono font-semibold text-[#1E274A] sm:px-6">{vistoria.id}</td>
-                          <td className="min-w-80 px-5 py-4 leading-6 sm:px-6">{vistoria.description}</td>
-                          <td className="px-5 py-4 sm:px-6">
-                            <span className={vistoria.pendente ? 'font-semibold text-[#C8353F]' : 'font-semibold text-[#16803A]'}>
-                              {vistoria.pendente ? 'Pendente' : 'Concluída'}
-                            </span>
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-4 text-[#687076] sm:px-6">{formatarData(vistoria.createdAt)}</td>
-                          <td className="whitespace-nowrap px-5 py-4 text-[#687076] sm:px-6">{formatarData(vistoria.updatedAt)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : null}
-
-              {!carregando && !mensagemErro && !vistoriasFiltradas.length ? (
-                <div className="px-6 py-12">
-                  <p className="font-semibold text-[#1E274A]">Nenhuma vistoria encontrada</p>
-                  <p className="mt-2 text-sm leading-6 text-[#687076]">
-                    Ajuste os filtros ou cadastre uma nova vistoria para iniciar o acompanhamento.
-                  </p>
-                </div>
-              ) : null}
-            </section>
+            {!carregando && !mensagemErro && !vistoriasFiltradas.length ? (
+              <section className="mt-10 rounded-xl border border-[#DDE3ED] bg-white px-5 py-12 shadow-[0_8px_24px_rgba(30,39,74,0.06)] sm:px-6">
+                <p className="font-semibold text-[#1E274A]">Nenhuma vistoria encontrada</p>
+                <p className="mt-2 text-sm leading-6 text-[#687076]">
+                  Ajuste os filtros ou cadastre uma nova vistoria para iniciar o acompanhamento.
+                </p>
+              </section>
+            ) : null}
           </div>
         </section>
       </main>

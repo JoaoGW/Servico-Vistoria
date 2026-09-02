@@ -1,8 +1,8 @@
 interface ErrorModalProps {
+  title: string
   message: string
   onClose: () => void
   onRetry?: () => void
-  title: string
 }
 
 export default function ErrorModal({ message, onClose, onRetry, title }: ErrorModalProps) {

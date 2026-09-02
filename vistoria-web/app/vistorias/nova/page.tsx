@@ -1,6 +1,6 @@
 'use client'
-
 import { type FormEvent, useState } from 'react'
+
 import { useRouter } from 'next/navigation'
 
 import PagesCommomSidebar from '@/components/PagesCommomSidebar'
@@ -44,23 +44,19 @@ const criarVistoria = async ({ description }: DadosVistoria) => {
 }
 
 export default function NovaVistoria() {
+  const [etapaAtual, setEtapaAtual] = useState<number>(1)
+  const [sidebarRecolhida, setSidebarRecolhida] = useState<boolean>(false)
+  const [description, setDescription] = useState<string>('')
+  const [enviando, setEnviando] = useState<boolean>(false)
+  const [modalErro, setModalErro] = useState<boolean>(false)
+  const [modalSucesso, setModalSucesso] = useState<boolean>(false)
+  const [mensagemErro, setMensagemErro] = useState<string>('')
+
   const router = useRouter()
-  const [etapaAtual, setEtapaAtual] = useState(1)
-  const [sidebarRecolhida, setSidebarRecolhida] = useState(false)
-  const [description, setDescription] = useState('')
-  const [enviando, setEnviando] = useState(false)
-  const [modalErro, setModalErro] = useState(false)
-  const [modalSucesso, setModalSucesso] = useState(false)
-  const [mensagemErro, setMensagemErro] = useState('')
 
   const limparCadastro = () => {
     setEtapaAtual(1)
     setDescription('')
-  }
-
-  const sair = () => {
-    sessionStorage.removeItem('accessToken')
-    router.replace('/')
   }
 
   const cancelar = () => {
@@ -106,7 +102,6 @@ export default function NovaVistoria() {
       <PagesCommomSidebar
         activeItem="vistorias"
         collapsed={sidebarRecolhida}
-        onLogout={sair}
         onToggle={() => setSidebarRecolhida((recolhida) => !recolhida)}
       />
 

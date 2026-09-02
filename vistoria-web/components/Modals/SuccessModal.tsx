@@ -1,8 +1,8 @@
 interface SuccessModalProps {
-  actionLabel: string
-  message: string
-  onClose: () => void
   title: string
+  message: string
+  actionLabel: string
+  onClose: () => void
 }
 
 export default function SuccessModal({ actionLabel, message, onClose, title }: SuccessModalProps) {
