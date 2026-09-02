@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderTopColor: CoresVistoria.borda,
     borderTopWidth: 1,
-    height: 264,
+    height: 312,
     justifyContent: 'center',
     paddingHorizontal: 24,
   },

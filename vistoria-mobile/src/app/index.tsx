@@ -1,47 +1,69 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { BotaoConcluirVistoria } from '@/components/Buttons/BotaoConcluirVistoria'
-import { MapaDaVistoria } from '@/components/Home/MapaDaVistoria'
-import { NavegacaoInferior } from '@/components/Navegacao/NavegacaoInferior'
-import { CoresVistoria, Fonts } from '@/constants/theme'
+import { BotaoConcluirVistoria } from "@/components/Buttons/BotaoConcluirVistoria";
+import { MapaDaVistoria } from "@/components/Home/MapaDaVistoria";
+import { NavegacaoInferior } from "@/components/Navegacao/NavegacaoInferior";
+
+import { CoresVistoria } from "@/constants/theme";
+
+import { useRelogioGlobal } from "@/hooks/use-relogio-global";
+
+import { useVistoriaStore } from "@/stores/use-vistoria-store";
 
 export default function HomeScreen() {
+  const { dataAtual, horarioAtual } = useRelogioGlobal();
+  const vistoriaAtiva = useVistoriaStore((estado) => estado.vistoriaAtiva);
+  const possuiVistoriaAtiva = Boolean(vistoriaAtiva);
+
   return (
-    <SafeAreaView edges={['top', 'bottom']} style={styles.areaSegura}>
+    <SafeAreaView edges={["top", "bottom"]} style={styles.areaSegura}>
       <View style={styles.container}>
-        <ScrollView contentContainerStyle={styles.conteudo} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.conteudo}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.cabecalho}>
             <Text style={styles.marca}>PEACORE</Text>
             <Text style={styles.titulo}>Peacore Vistorias</Text>
-            <Text style={styles.descricao}>Os dados da vistoria serão exibidos aqui.</Text>
+            <Text style={styles.descricao}>
+              Os dados da vistoria serão exibidos aqui.
+            </Text>
           </View>
 
           <MapaDaVistoria />
 
           <View style={styles.informacoes}>
-            <Text style={styles.horario}>--:--</Text>
+            <Text style={styles.horario}>{horarioAtual}</Text>
             <View style={styles.dataContainer}>
-              <Text style={styles.data}>--/--/----</Text>
-              <Text style={styles.diaSemana}>—</Text>
+              <Text style={styles.data}>{dataAtual}</Text>
+              <Text style={styles.vistoriaAtiva}>
+                {vistoriaAtiva?.titulo ?? "Nenhum vistoria selecionada"}
+              </Text>
             </View>
           </View>
 
           <View style={styles.acao}>
-            <BotaoConcluirVistoria />
+            <BotaoConcluirVistoria possuiVistoriaAtiva={possuiVistoriaAtiva} />
           </View>
 
-          <View style={styles.resumo}>
-            <Text style={styles.resumoTitulo}>Resumo da vistoria</Text>
-            <Text style={styles.resumoDescricao}>Nenhum dado disponível.</Text>
-            <Text style={styles.resumoComplemento}>As informações serão exibidas nesta área.</Text>
-          </View>
+          {possuiVistoriaAtiva ? (
+            <View style={styles.resumo}>
+              <Text style={styles.resumoTitulo}>Resumo da vistoria</Text>
+              <Text style={styles.resumoDescricao}>
+                Nenhum dado disponível.
+              </Text>
+              <Text style={styles.resumoComplemento}>
+                As informações serão exibidas nesta área.
+              </Text>
+            </View>
+          ) : null}
         </ScrollView>
 
         <NavegacaoInferior />
       </View>
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -63,14 +85,13 @@ const styles = StyleSheet.create({
   marca: {
     color: CoresVistoria.marca,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 0.8,
   },
   titulo: {
     color: CoresVistoria.titulo,
-    fontFamily: Fonts.sans,
     fontSize: 30,
-    fontWeight: '700',
+    fontWeight: "700",
     marginTop: 4,
   },
   descricao: {
@@ -80,32 +101,33 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   informacoes: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingHorizontal: 24,
     paddingTop: 32,
   },
   horario: {
     color: CoresVistoria.marca,
     fontSize: 56,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '700',
+    fontVariant: ["tabular-nums"],
+    fontWeight: "700",
     letterSpacing: -2,
   },
   dataContainer: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   data: {
     color: CoresVistoria.marca,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
   },
-  diaSemana: {
+  vistoriaAtiva: {
     color: CoresVistoria.titulo,
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: "600",
     marginTop: 4,
+    textAlign: "right",
   },
   acao: {
     marginTop: 32,
@@ -123,12 +145,12 @@ const styles = StyleSheet.create({
   resumoTitulo: {
     color: CoresVistoria.titulo,
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   resumoDescricao: {
     color: CoresVistoria.titulo,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginTop: 16,
   },
   resumoComplemento: {
@@ -137,4 +159,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 4,
   },
-})
+});
