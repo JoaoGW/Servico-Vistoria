@@ -1,5 +1,5 @@
 import { BotaoConcluirVistoria } from "@/components/Buttons/BotaoConcluirVistoria";
-import { MapaDaVistoria } from "@/components/Home/MapaDaVistoria";
+import { MapaDaVistoria } from "@/components/Home/MapaDaVistoria.native";
 import { IndicadorConexao } from "@/components/IndicadorConexao";
 import { Box } from "@/components/ui/box";
 import { ScrollView } from "@/components/ui/scroll-view";

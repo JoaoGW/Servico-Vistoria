@@ -1,10 +1,11 @@
 import { type Href, useRouter } from "expo-router";
-import { ClipboardCheck, FileText, House } from "lucide-react-native";
 
 import { Box } from "@/components/ui/box";
 import { Icon } from "@/components/ui/icon";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
+
+import { ClipboardCheck, FileText, House } from "lucide-react-native";
 
 interface INavegacaoInferiorProps {
   abaAtiva: "home" | "vistoria" | "documentos";

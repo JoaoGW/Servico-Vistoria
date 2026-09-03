@@ -1,9 +1,9 @@
-import type { LucideIcon } from "lucide-react-native";
-
 import { Box } from "@/components/ui/box";
 import { Icon } from "@/components/ui/icon";
 import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
+
+import type { LucideIcon } from "lucide-react-native";
 
 interface ICampoLoginProps {
   icone: LucideIcon;
