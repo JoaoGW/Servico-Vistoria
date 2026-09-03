@@ -26,7 +26,7 @@ export async function GET(
     const { id } = await context.params;
 
     const headers = new Headers({
-      Accept: "application/json",
+      Accept: "*/*",
     });
 
     const authorization = request.headers.get("Authorization");

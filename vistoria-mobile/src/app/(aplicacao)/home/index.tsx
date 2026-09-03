@@ -49,7 +49,7 @@ export default function PaginaInicial() {
               {dataAtual}
             </Text>
             <Text className="mt-2 text-sm font-semibold text-vistoria-titulo">
-              {vistoriaAtiva?.titulo ?? "Nenhum vistoria selecionada"}
+              {vistoriaAtiva?.titulo ?? "Nenhuma vistoria selecionada"}
             </Text>
           </Box>
         </Box>

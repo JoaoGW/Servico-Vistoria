@@ -1,5 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { File, Paths } from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
+import * as IntentLauncher from "expo-intent-launcher";
+import * as Sharing from "expo-sharing";
 import { useEffect, useState } from "react";
+import { Alert, Platform } from "react-native";
 
 import { IndicadorConexao } from "@/components/IndicadorConexao";
 import { AvisoSemDocumentos } from "@/components/ItensVazios/AvisoSemDocumentos";
@@ -35,8 +40,17 @@ const visualizarDocumentos = async (token: string) => {
   return response.json() as Promise<DocumentoApi[]>;
 };
 
+function obterNomeSeguroArquivo(documento: DocumentoModel) {
+  const nome = documento.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+
+  return nome || `documento-${documento.id}`;
+}
+
 export default function PaginaDocumentos() {
   const [documentos, setDocumentos] = useState<DocumentoModel[]>([]);
+  const [documentoAbrindoId, setDocumentoAbrindoId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     const inscricao = database
@@ -70,6 +84,64 @@ export default function PaginaDocumentos() {
     void atualizarDocumentos();
   }, []);
 
+  const abrirDocumento = async (documento: DocumentoModel) => {
+    setDocumentoAbrindoId(documento.id);
+
+    try {
+      const token = await AsyncStorage.getItem("accessToken");
+
+      if (!token) {
+        throw new Error("Sua sessão expirou. Entre novamente para abrir o documento.");
+      }
+
+      const response = await fetch(`/api/documentos/${documento.id}/arquivo`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Não foi possível baixar o documento.");
+      }
+
+      const arquivo = new File(
+        Paths.cache,
+        `${documento.id}-${obterNomeSeguroArquivo(documento)}`,
+      );
+      arquivo.write(new Uint8Array(await response.arrayBuffer()));
+
+      if (Platform.OS === "android") {
+        const contentUri = await FileSystem.getContentUriAsync(arquivo.uri);
+
+        await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
+          data: contentUri,
+          flags: 1,
+          type: documento.fileMimeType || "application/octet-stream",
+        });
+        return;
+      }
+
+      if (!(await Sharing.isAvailableAsync())) {
+        throw new Error("Não há um visualizador de arquivos disponível neste dispositivo.");
+      }
+
+      await Sharing.shareAsync(arquivo.uri, {
+        dialogTitle: "Abrir documento",
+        mimeType: documento.fileMimeType || "application/octet-stream",
+      });
+    } catch (error) {
+      console.error("Não foi possível abrir o documento.", error);
+      Alert.alert(
+        "Não foi possível abrir o documento",
+        error instanceof Error
+          ? error.message
+          : "Tente novamente em alguns instantes.",
+      );
+    } finally {
+      setDocumentoAbrindoId(null);
+    }
+  };
+
   return (
     <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
       <Box className="flex-1 pb-8">
@@ -96,7 +168,11 @@ export default function PaginaDocumentos() {
           </Text>
           <Box className="mt-4">
             {documentos.length ? (
-              <ListaDocumentos documentos={documentos} />
+              <ListaDocumentos
+                documentos={documentos}
+                documentoAbrindoId={documentoAbrindoId}
+                onAbrirDocumento={abrirDocumento}
+              />
             ) : (
               <AvisoSemDocumentos />
             )}
