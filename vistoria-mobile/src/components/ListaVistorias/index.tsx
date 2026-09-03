@@ -5,7 +5,7 @@ import { Text } from "@/components/ui/text";
 
 import type { VistoriaModel } from "@/db/models/Vistoria";
 import { useVistoriaStore } from "@/stores/use-vistoria-store";
-import { CircleCheck } from "lucide-react-native";
+import { CircleCheck, Clock3 } from "lucide-react-native";
 
 interface IListaVistoriasProps {
   vistorias: VistoriaModel[];
@@ -46,9 +46,12 @@ export function ListaVistorias({ vistorias }: IListaVistoriasProps) {
                 <Text className="text-base font-bold text-vistoria-titulo">
                   {vistoria.description}
                 </Text>
-                <Text className="mt-1 text-sm font-bold text-vistoria-marca">
-                  {vistoria.pendente ? "Pendente" : "Concluída"}
-                </Text>
+                <Box className="mt-3 self-start flex-row items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1">
+                  <Icon as={Clock3} className="text-amber-800" size="sm" />
+                  <Text className="text-xs font-extrabold uppercase tracking-[1px] text-amber-800">
+                    {vistoria.pendente ? "Pendente" : "Concluída"}
+                  </Text>
+                </Box>
               </Box>
 
               {estaSelecionada ? (

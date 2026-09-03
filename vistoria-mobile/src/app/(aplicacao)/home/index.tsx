@@ -1,18 +1,137 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
+import { useState } from "react";
+import { Alert } from "react-native";
+
 import { BotaoConcluirVistoria } from "@/components/Buttons/BotaoConcluirVistoria";
 import { MapaDaVistoria } from "@/components/Home/MapaDaVistoria.native";
 import { IndicadorConexao } from "@/components/IndicadorConexao";
+import { ConfirmarFotoVistoria } from "@/components/Modals/ConfirmarFotoVistoria";
 import { Box } from "@/components/ui/box";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 
 import { useRelogioGlobal } from "@/hooks/use-relogio-global";
 
+import { concluirVistoriaLocal } from "@/db/sincronizacao";
 import { useVistoriaStore } from "@/stores/use-vistoria-store";
 
 export default function PaginaInicial() {
   const { dataAtual, horarioAtual } = useRelogioGlobal();
   const vistoriaAtiva = useVistoriaStore((estado) => estado.vistoriaAtiva);
+  const limparVistoriaAtiva = useVistoriaStore(
+    (estado) => estado.limparVistoriaAtiva,
+  );
   const possuiVistoriaAtiva = Boolean(vistoriaAtiva);
+  const [fotoParaConfirmar, setFotoParaConfirmar] =
+    useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [estaConcluindo, setEstaConcluindo] = useState(false);
+
+  const capturarFoto = async () => {
+    try {
+      const permissao = await ImagePicker.requestCameraPermissionsAsync();
+
+      if (!permissao.granted) {
+        Alert.alert(
+          "Permissão necessária",
+          "Permita o uso da câmera para registrar a foto do trabalho realizado.",
+        );
+        return;
+      }
+
+      const resultado = await ImagePicker.launchCameraAsync({
+        cameraType: ImagePicker.CameraType.back,
+        mediaTypes: ["images"],
+        quality: 0.8,
+      });
+
+      if (!resultado.canceled) {
+        setFotoParaConfirmar(resultado.assets[0]);
+      }
+    } catch (error) {
+      console.error("Não foi possível abrir a câmera.", error);
+      Alert.alert(
+        "Não foi possível abrir a câmera",
+        "Tente novamente em alguns instantes.",
+      );
+    }
+  };
+
+  const confirmarConclusao = async () => {
+    if (!vistoriaAtiva || !fotoParaConfirmar) {
+      return;
+    }
+
+    setEstaConcluindo(true);
+
+    try {
+      const permissao = await Location.requestForegroundPermissionsAsync();
+
+      if (!permissao.granted) {
+        throw new Error(
+          "Permita o acesso à localização para concluir esta vistoria.",
+        );
+      }
+
+      const localizacao = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      const token = await AsyncStorage.getItem("accessToken");
+
+      if (!token) {
+        throw new Error("Sua sessão expirou. Entre novamente para concluir a vistoria.");
+      }
+
+      const mimeType = fotoParaConfirmar.mimeType ?? "image/jpeg";
+      const nomeArquivo =
+        fotoParaConfirmar.fileName ?? `vistoria-${vistoriaAtiva.id}.jpg`;
+      const dados = new FormData();
+      dados.append("id", vistoriaAtiva.id);
+      dados.append("latitude", String(localizacao.coords.latitude));
+      dados.append("longitude", String(localizacao.coords.longitude));
+      dados.append(
+        "photo",
+        {
+          name: nomeArquivo,
+          type: mimeType,
+          uri: fotoParaConfirmar.uri,
+        } as unknown as Blob,
+      );
+
+      const response = await fetch("/api/vistorias/concluirVistoria", {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: dados,
+      });
+
+      if (!response.ok) {
+        throw new Error("Não foi possível concluir a vistoria.");
+      }
+
+      await concluirVistoriaLocal({
+        id: vistoriaAtiva.id,
+        latitude: localizacao.coords.latitude,
+        longitude: localizacao.coords.longitude,
+        photoMimeType: mimeType,
+      });
+      limparVistoriaAtiva();
+      setFotoParaConfirmar(null);
+      Alert.alert("Vistoria concluída", "A foto e a localização foram enviadas.");
+    } catch (error) {
+      console.error("Não foi possível concluir a vistoria.", error);
+      Alert.alert(
+        "Não foi possível concluir a vistoria",
+        error instanceof Error
+          ? error.message
+          : "Tente novamente em alguns instantes.",
+      );
+    } finally {
+      setEstaConcluindo(false);
+    }
+  };
 
   return (
     <ScrollView
@@ -55,7 +174,11 @@ export default function PaginaInicial() {
         </Box>
 
         <Box className="px-6 pt-6">
-          <BotaoConcluirVistoria possuiVistoriaAtiva={possuiVistoriaAtiva} />
+          <BotaoConcluirVistoria
+            estaConcluindo={estaConcluindo}
+            onPress={capturarFoto}
+            possuiVistoriaAtiva={possuiVistoriaAtiva}
+          />
         </Box>
 
         {possuiVistoriaAtiva ? (
@@ -72,6 +195,19 @@ export default function PaginaInicial() {
           </Box>
         ) : null}
       </Box>
+
+      {fotoParaConfirmar ? (
+        <ConfirmarFotoVistoria
+          carregando={estaConcluindo}
+          fotoUri={fotoParaConfirmar.uri}
+          onCancelar={() => setFotoParaConfirmar(null)}
+          onConfirmar={confirmarConclusao}
+          onTirarOutra={() => {
+            setFotoParaConfirmar(null);
+            void capturarFoto();
+          }}
+        />
+      ) : null}
     </ScrollView>
   );
 }

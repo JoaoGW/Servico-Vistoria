@@ -51,7 +51,19 @@
           }
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Permita o acesso à câmera para registrar a foto da vistoria."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Permita o acesso à localização para concluir a vistoria."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

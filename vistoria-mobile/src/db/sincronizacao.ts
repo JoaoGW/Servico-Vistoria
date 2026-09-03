@@ -91,3 +91,30 @@ export async function sincronizarVistorias(vistoriasApi: VistoriaApi[]) {
     await database.batch(...operacoes);
   });
 }
+
+interface IDadosConclusaoVistoria {
+  id: string;
+  latitude: number;
+  longitude: number;
+  photoMimeType: string;
+}
+
+export async function concluirVistoriaLocal({
+  id,
+  latitude,
+  longitude,
+  photoMimeType,
+}: IDadosConclusaoVistoria) {
+  const vistorias = database.get<VistoriaModel>("vistorias");
+  const vistoria = await vistorias.find(id);
+
+  await database.write(async () => {
+    await vistoria.update((registro) => {
+      registro.latitude = latitude;
+      registro.longitude = longitude;
+      registro.photoMimeType = photoMimeType;
+      registro.pendente = false;
+      registro.updatedAt = new Date();
+    });
+  });
+}
