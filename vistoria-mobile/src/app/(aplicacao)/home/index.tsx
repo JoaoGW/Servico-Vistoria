@@ -1,8 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { File } from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
-import * as Location from "expo-location";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Alert } from "react-native";
 
 import { BotaoConcluirVistoria } from "@/components/Buttons/BotaoConcluirVistoria";
@@ -14,6 +13,10 @@ import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 
 import { useRelogioGlobal } from "@/hooks/use-relogio-global";
+import {
+  obterCoordenadasAtuais,
+  useLocalizacaoAtual,
+} from "@/hooks/use-localizacao-atual";
 
 import { concluirVistoriaLocal } from "@/db/sincronizacao";
 import { useVistoriaStore } from "@/stores/use-vistoria-store";
@@ -32,63 +35,7 @@ export default function PaginaInicial() {
   const [fotoParaConfirmar, setFotoParaConfirmar] =
     useState<ImagePicker.ImagePickerAsset | null>(null);
   const [estaConcluindo, setEstaConcluindo] = useState(false);
-  const [coordenadasAtuais, setCoordenadasAtuais] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
-
-  useEffect(() => {
-    let estaMontado = true;
-    let monitoramento: Location.LocationSubscription | null = null;
-
-    const atualizarCoordenadas = (localizacao: Location.LocationObject) => {
-      if (!estaMontado) {
-        return;
-      }
-
-      setCoordenadasAtuais({
-        latitude: localizacao.coords.latitude,
-        longitude: localizacao.coords.longitude,
-      });
-    };
-
-    const iniciarMonitoramento = async () => {
-      try {
-        const permissao = await Location.requestForegroundPermissionsAsync();
-
-        if (!permissao.granted || !estaMontado) {
-          return;
-        }
-
-        const localizacaoInicial = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        });
-        atualizarCoordenadas(localizacaoInicial);
-
-        monitoramento = await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.High,
-            distanceInterval: 5,
-            timeInterval: 5_000,
-          },
-          atualizarCoordenadas,
-        );
-
-        if (!estaMontado) {
-          monitoramento.remove();
-        }
-      } catch (error) {
-        console.warn("Não foi possível obter a localização atual.", error);
-      }
-    };
-
-    void iniciarMonitoramento();
-
-    return () => {
-      estaMontado = false;
-      monitoramento?.remove();
-    };
-  }, []);
+  const coordenadasAtuais = useLocalizacaoAtual();
 
   const capturarFoto = async () => {
     try {
@@ -128,17 +75,7 @@ export default function PaginaInicial() {
     setEstaConcluindo(true);
 
     try {
-      const permissao = await Location.requestForegroundPermissionsAsync();
-
-      if (!permissao.granted) {
-        throw new Error(
-          "Permita o acesso à localização para concluir esta vistoria.",
-        );
-      }
-
-      const localizacao = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
+      const localizacao = await obterCoordenadasAtuais();
       const token = await AsyncStorage.getItem("accessToken");
 
       if (!token) {
@@ -150,10 +87,13 @@ export default function PaginaInicial() {
         fotoParaConfirmar.fileName ?? `vistoria-${vistoriaAtiva.id}.jpg`;
       const dados = new FormData();
       const arquivoFoto = new File(fotoParaConfirmar.uri);
+      const foto = new Blob([await arquivoFoto.arrayBuffer()], {
+        type: mimeType,
+      });
       dados.append("id", vistoriaAtiva.id);
-      dados.append("latitude", String(localizacao.coords.latitude));
-      dados.append("longitude", String(localizacao.coords.longitude));
-      dados.append("photo", arquivoFoto, nomeArquivo);
+      dados.append("latitude", String(localizacao.latitude));
+      dados.append("longitude", String(localizacao.longitude));
+      dados.append("photo", foto, nomeArquivo);
 
       const response = await fetch("/api/vistorias/concluirVistoria", {
         method: "PUT",
@@ -169,8 +109,8 @@ export default function PaginaInicial() {
 
       await concluirVistoriaLocal({
         id: vistoriaAtiva.id,
-        latitude: localizacao.coords.latitude,
-        longitude: localizacao.coords.longitude,
+        latitude: localizacao.latitude,
+        longitude: localizacao.longitude,
         photoMimeType: mimeType,
       });
       limparVistoriaAtiva();

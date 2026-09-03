@@ -28,12 +28,7 @@ export function ListaVistorias({ vistorias }: IListaVistoriasProps) {
         return (
           <Pressable
             key={vistoria.id}
-            accessibilityHint={
-              estaSelecionada
-                ? "Remove esta vistoria como ativa"
-                : "Define esta vistoria como ativa na tela inicial"
-            }
-            accessibilityLabel={`${estaSelecionada ? "Remover" : "Selecionar"} vistoria: ${vistoria.description}`}
+            accessibilityLabel={`Selecionar vistoria: ${vistoria.description}`}
             accessibilityRole="button"
             accessibilityState={{ selected: estaSelecionada }}
             className={`rounded-xl border p-4 data-[active=true]:bg-vistoria-fundo ${
