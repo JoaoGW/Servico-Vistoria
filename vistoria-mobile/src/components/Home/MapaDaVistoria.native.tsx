@@ -11,8 +11,25 @@ import { Text } from "@/components/ui/text";
 const ARQUIVO_LEAFLET = require("../../../assets/leaflet.html");
 const POSICAO_INICIAL_NEUTRA = { lat: 0, lng: 0 };
 
-export function MapaDaVistoria() {
+interface IMapaDaVistoriaProps {
+  coordenadas: { latitude: number; longitude: number } | null;
+}
+
+export function MapaDaVistoria({ coordenadas }: IMapaDaVistoriaProps) {
   const [conteudoMapa, setConteudoMapa] = useState<string | null>(null);
+  const posicaoAtual = coordenadas
+    ? { lat: coordenadas.latitude, lng: coordenadas.longitude }
+    : POSICAO_INICIAL_NEUTRA;
+  const marcadores = coordenadas
+    ? [
+        {
+          icon: "📍",
+          id: "posicao-atual",
+          position: posicaoAtual,
+          title: "Sua localização atual",
+        },
+      ]
+    : [];
 
   useEffect(() => {
     let estaMontado = true;
@@ -52,9 +69,10 @@ export function MapaDaVistoria() {
     <Box className="min-h-[380px] flex-1 overflow-hidden border-y border-vistoria-borda">
       <LeafletView
         doDebug={false}
-        mapCenterPosition={POSICAO_INICIAL_NEUTRA}
+        mapCenterPosition={posicaoAtual}
+        mapMarkers={marcadores}
         source={{ html: conteudoMapa }}
-        zoom={2}
+        zoom={coordenadas ? 16 : 2}
       />
     </Box>
   );

@@ -24,7 +24,7 @@ export function BotaoConcluirVistoria({
       }
       accessibilityRole="button"
       accessibilityState={{ busy: estaConcluindo, disabled: estaDesabilitado }}
-      className="h-14 flex-row items-center justify-center gap-3 rounded-xl bg-vistoria-marca data-[active=true]:bg-vistoria-marca-pressionada data-[disabled=true]:bg-vistoria-borda"
+      className="h-14 flex-row items-center justify-center gap-3 rounded-xl bg-vistoria-marca data-[active=true]:bg-vistoria-marca-pressionada data-[disabled=true]:bg-vistoria-marca data-[disabled=true]:opacity-100"
       disabled={estaDesabilitado}
       onPress={onPress}
     >

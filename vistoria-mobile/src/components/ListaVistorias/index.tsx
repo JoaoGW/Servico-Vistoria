@@ -16,6 +16,9 @@ export function ListaVistorias({ vistorias }: IListaVistoriasProps) {
   const selecionarVistoria = useVistoriaStore(
     (estado) => estado.selecionarVistoria,
   );
+  const limparVistoriaAtiva = useVistoriaStore(
+    (estado) => estado.limparVistoriaAtiva,
+  );
 
   return (
     <Box className="gap-3">
@@ -25,8 +28,12 @@ export function ListaVistorias({ vistorias }: IListaVistoriasProps) {
         return (
           <Pressable
             key={vistoria.id}
-            accessibilityHint="Define esta vistoria como ativa na tela inicial"
-            accessibilityLabel={`Selecionar vistoria: ${vistoria.description}`}
+            accessibilityHint={
+              estaSelecionada
+                ? "Remove esta vistoria como ativa"
+                : "Define esta vistoria como ativa na tela inicial"
+            }
+            accessibilityLabel={`${estaSelecionada ? "Remover" : "Selecionar"} vistoria: ${vistoria.description}`}
             accessibilityRole="button"
             accessibilityState={{ selected: estaSelecionada }}
             className={`rounded-xl border p-4 data-[active=true]:bg-vistoria-fundo ${
@@ -34,12 +41,17 @@ export function ListaVistorias({ vistorias }: IListaVistoriasProps) {
                 ? "border-vistoria-marca bg-vistoria-fundo"
                 : "border-vistoria-borda bg-vistoria-superficie"
             }`}
-            onPress={() =>
+            onPress={() => {
+              if (estaSelecionada) {
+                limparVistoriaAtiva();
+                return;
+              }
+
               selecionarVistoria({
                 id: vistoria.id,
                 titulo: vistoria.description,
-              })
-            }
+              });
+            }}
           >
             <Box className="flex-row items-start justify-between gap-4">
               <Box className="flex-1">

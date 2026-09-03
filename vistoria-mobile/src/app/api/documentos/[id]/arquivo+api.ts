@@ -24,40 +24,29 @@ export async function GET(
     }
 
     const { id } = await context.params;
-
-    const headers = new Headers({
-      Accept: "*/*",
-    });
-
+    const headers = new Headers({ Accept: "*/*" });
     const authorization = request.headers.get("Authorization");
+
     if (authorization) {
       headers.set("Authorization", authorization);
     }
 
-    const apiUrl = process.env.APIS_URL + "/documentos" + `/${id}/arquivo`;
-
-    const response = await fetch(apiUrl, {
+    const response = await fetch(`${process.env.APIS_URL}/documentos/${id}/arquivo`, {
       method: "GET",
       headers,
     });
 
     if (!response.ok) {
       return Response.json(
-        {
-          error: "Erro no processo de response da API - Arquivo do Documento",
-        },
+        { error: "Erro ao recuperar o arquivo do documento." },
         { status: response.status },
       );
     }
 
-    return new Response(response.body, {
-      headers: response.headers,
-    });
+    return new Response(response.body, { headers: response.headers });
   } catch (error) {
     return Response.json(
-      {
-        error: "Erro encontrado na API - Arquivo do Documento: " + error,
-      },
+      { error: "Erro encontrado ao recuperar o arquivo do documento: " + error },
       { status: 500 },
     );
   }

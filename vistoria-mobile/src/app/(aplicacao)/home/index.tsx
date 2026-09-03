@@ -1,11 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { File } from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert } from "react-native";
 
 import { BotaoConcluirVistoria } from "@/components/Buttons/BotaoConcluirVistoria";
-import { MapaDaVistoria } from "@/components/Home/MapaDaVistoria.native";
+import { MapaDaVistoria } from "@/components/Home/MapaDaVistoria";
 import { IndicadorConexao } from "@/components/IndicadorConexao";
 import { ConfirmarFotoVistoria } from "@/components/Modals/ConfirmarFotoVistoria";
 import { Box } from "@/components/ui/box";
@@ -17,6 +18,10 @@ import { useRelogioGlobal } from "@/hooks/use-relogio-global";
 import { concluirVistoriaLocal } from "@/db/sincronizacao";
 import { useVistoriaStore } from "@/stores/use-vistoria-store";
 
+function abreviarDescricao(descricao: string) {
+  return descricao.length > 20 ? `${descricao.slice(0, 20)}...` : descricao;
+}
+
 export default function PaginaInicial() {
   const { dataAtual, horarioAtual } = useRelogioGlobal();
   const vistoriaAtiva = useVistoriaStore((estado) => estado.vistoriaAtiva);
@@ -27,6 +32,63 @@ export default function PaginaInicial() {
   const [fotoParaConfirmar, setFotoParaConfirmar] =
     useState<ImagePicker.ImagePickerAsset | null>(null);
   const [estaConcluindo, setEstaConcluindo] = useState(false);
+  const [coordenadasAtuais, setCoordenadasAtuais] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
+  useEffect(() => {
+    let estaMontado = true;
+    let monitoramento: Location.LocationSubscription | null = null;
+
+    const atualizarCoordenadas = (localizacao: Location.LocationObject) => {
+      if (!estaMontado) {
+        return;
+      }
+
+      setCoordenadasAtuais({
+        latitude: localizacao.coords.latitude,
+        longitude: localizacao.coords.longitude,
+      });
+    };
+
+    const iniciarMonitoramento = async () => {
+      try {
+        const permissao = await Location.requestForegroundPermissionsAsync();
+
+        if (!permissao.granted || !estaMontado) {
+          return;
+        }
+
+        const localizacaoInicial = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+        atualizarCoordenadas(localizacaoInicial);
+
+        monitoramento = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            distanceInterval: 5,
+            timeInterval: 5_000,
+          },
+          atualizarCoordenadas,
+        );
+
+        if (!estaMontado) {
+          monitoramento.remove();
+        }
+      } catch (error) {
+        console.warn("Não foi possível obter a localização atual.", error);
+      }
+    };
+
+    void iniciarMonitoramento();
+
+    return () => {
+      estaMontado = false;
+      monitoramento?.remove();
+    };
+  }, []);
 
   const capturarFoto = async () => {
     try {
@@ -87,17 +149,11 @@ export default function PaginaInicial() {
       const nomeArquivo =
         fotoParaConfirmar.fileName ?? `vistoria-${vistoriaAtiva.id}.jpg`;
       const dados = new FormData();
+      const arquivoFoto = new File(fotoParaConfirmar.uri);
       dados.append("id", vistoriaAtiva.id);
       dados.append("latitude", String(localizacao.coords.latitude));
       dados.append("longitude", String(localizacao.coords.longitude));
-      dados.append(
-        "photo",
-        {
-          name: nomeArquivo,
-          type: mimeType,
-          uri: fotoParaConfirmar.uri,
-        } as unknown as Blob,
-      );
+      dados.append("photo", arquivoFoto, nomeArquivo);
 
       const response = await fetch("/api/vistorias/concluirVistoria", {
         method: "PUT",
@@ -157,7 +213,7 @@ export default function PaginaInicial() {
           </Box>
         </Box>
 
-        <MapaDaVistoria />
+        <MapaDaVistoria coordenadas={coordenadasAtuais} />
 
         <Box className="flex-row items-end justify-between bg-vistoria-superficie px-6 py-8">
           <Text className="text-[64px] font-bold leading-none text-vistoria-marca">
@@ -167,8 +223,13 @@ export default function PaginaInicial() {
             <Text className="text-lg font-bold text-vistoria-marca">
               {dataAtual}
             </Text>
-            <Text className="mt-2 text-sm font-semibold text-vistoria-titulo">
-              {vistoriaAtiva?.titulo ?? "Nenhuma vistoria selecionada"}
+            <Text
+              className="mt-2 text-sm font-semibold text-vistoria-titulo"
+              numberOfLines={1}
+            >
+              {vistoriaAtiva
+                ? abreviarDescricao(vistoriaAtiva.titulo)
+                : "Nenhuma vistoria selecionada"}
             </Text>
           </Box>
         </Box>
