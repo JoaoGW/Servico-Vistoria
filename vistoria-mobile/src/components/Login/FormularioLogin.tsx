@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useState } from "react";
 
 import { useRouter } from "expo-router";
@@ -88,16 +89,14 @@ export function FormularioLogin() {
         accessibilityLabel="Fazer Login"
         accessibilityRole="button"
         className="mt-8 h-14 items-center justify-center rounded-xl bg-vistoria-marca data-[active=true]:bg-vistoria-marca-pressionada"
-        onPress={() => {
-          async () => {
-            try {
-              const data = await login({ email, senha });
-              sessionStorage.setItem("accessToken", data.accessToken);
-              router.push("/home");
-            } catch {
-              setModalErro(true);
-            }
-          };
+        onPress={async () => {
+          try {
+            const data = await login({ email, senha });
+            await AsyncStorage.setItem("accessToken", data.accessToken);
+            router.push("/home");
+          } catch {
+            setModalErro(true);
+          }
         }}
       >
         <Text className="text-lg font-bold text-white">Fazer Login</Text>

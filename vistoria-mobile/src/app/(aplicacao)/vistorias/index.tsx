@@ -4,6 +4,36 @@ import { Box } from "@/components/ui/box";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 
+export interface Vistoria {
+  id: string;
+  description: string;
+  pendente: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Busca todas as vistorias disponíveis para o usuário autenticado.
+ *
+ * @param token - Token JWT usado na autorização da requisição.
+ * @returns Retorna a lista de vistorias cadastradas.
+ * @throws Will throw an error if the request fails or the response is not successful.
+ */
+const visualizarVistorias = async (token: string) => {
+  const response = await fetch("/api/vistorias", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Não foi possível recuperar as vistorias.");
+  }
+
+  return response.json() as Promise<Vistoria[]>;
+};
+
 export default function PaginaVistorias() {
   return (
     <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
