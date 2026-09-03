@@ -1,8 +1,40 @@
-import { AvisoSemDocumentos } from "@/components/ItensVazios/AvisoSemDocumentos";
 import { IndicadorConexao } from "@/components/IndicadorConexao";
+import { AvisoSemDocumentos } from "@/components/ItensVazios/AvisoSemDocumentos";
 import { Box } from "@/components/ui/box";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
+
+export interface Documento {
+  createdAt: string;
+  fileMimeType:
+    | "application/pdf"
+    | "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  fileName: string;
+  id: string;
+  title: string;
+}
+
+/**
+ * Busca todos os documentos disponíveis para o usuário autenticado.
+ *
+ * @param token - Token JWT usado na autorização da requisição.
+ * @returns Retorna a lista de documentos cadastrados.
+ * @throws Will throw an error if the request fails or the response is not successful.
+ */
+const visualizarDocumentos = async (token: string) => {
+  const response = await fetch("/api/documentos/recuperarDocumentos", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Não foi possível recuperar os documentos.");
+  }
+
+  return response.json() as Promise<Documento[]>;
+};
 
 export default function PaginaDocumentos() {
   return (
