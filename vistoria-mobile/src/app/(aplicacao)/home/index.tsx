@@ -1,16 +1,148 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import { Alert } from "react-native";
+
 import { BotaoConcluirVistoria } from "@/components/Buttons/BotaoConcluirVistoria";
-import { MapaDaVistoria } from "@/components/Home/MapaDaVistoria.native";
+import { MapaDaVistoria } from "@/components/Home/MapaDaVistoria";
 import { IndicadorConexao } from "@/components/IndicadorConexao";
+import { ConfirmarFotoVistoria } from "@/components/Modals/ConfirmarFotoVistoria";
 import { Box } from "@/components/ui/box";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
+
 import { useRelogioGlobal } from "@/hooks/use-relogio-global";
+import {
+  obterCoordenadasAtuais,
+  useLocalizacaoAtual,
+} from "@/hooks/use-localizacao-atual";
+
+import { concluirVistoriaLocal } from "@/db/sincronizacao";
+import { criarCorpoMultipart } from "@/services/criar-corpo-multipart";
 import { useVistoriaStore } from "@/stores/use-vistoria-store";
 
+function abreviarDescricao(descricao: string) {
+  return descricao.length > 20 ? `${descricao.slice(0, 20)}...` : descricao;
+}
+
 export default function PaginaInicial() {
+  const router = useRouter();
   const { dataAtual, horarioAtual } = useRelogioGlobal();
   const vistoriaAtiva = useVistoriaStore((estado) => estado.vistoriaAtiva);
+  const limparVistoriaAtiva = useVistoriaStore(
+    (estado) => estado.limparVistoriaAtiva,
+  );
   const possuiVistoriaAtiva = Boolean(vistoriaAtiva);
+  const [fotoParaConfirmar, setFotoParaConfirmar] =
+    useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [estaConcluindo, setEstaConcluindo] = useState(false);
+  const coordenadasAtuais = useLocalizacaoAtual();
+
+  const capturarFoto = async () => {
+    try {
+      const permissao = await ImagePicker.requestCameraPermissionsAsync();
+
+      if (!permissao.granted) {
+        Alert.alert(
+          "Permissão necessária",
+          "Permita o uso da câmera para registrar a foto do trabalho realizado.",
+        );
+        return;
+      }
+
+      const resultado = await ImagePicker.launchCameraAsync({
+        cameraType: ImagePicker.CameraType.back,
+        mediaTypes: ["images"],
+        quality: 0.8,
+      });
+
+      if (!resultado.canceled) {
+        setFotoParaConfirmar(resultado.assets[0]);
+      }
+    } catch (error) {
+      console.error("Não foi possível abrir a câmera.", error);
+      Alert.alert(
+        "Não foi possível abrir a câmera",
+        "Tente novamente em alguns instantes.",
+      );
+    }
+  };
+
+  const confirmarConclusao = async () => {
+    if (!vistoriaAtiva || !fotoParaConfirmar) {
+      return;
+    }
+
+    setEstaConcluindo(true);
+
+    try {
+      const localizacao = await obterCoordenadasAtuais();
+      const token = await AsyncStorage.getItem("accessToken");
+
+      if (!token) {
+        throw new Error(
+          "Sua sessão expirou. Entre novamente para concluir a vistoria.",
+        );
+      }
+
+      const mimeType = fotoParaConfirmar.mimeType ?? "image/jpeg";
+      const nomeArquivo =
+        fotoParaConfirmar.fileName ?? `vistoria-${vistoriaAtiva.id}.jpg`;
+      const dados = await criarCorpoMultipart({
+        arquivo: {
+          campo: "photo",
+          mimeType,
+          nome: nomeArquivo,
+          uri: fotoParaConfirmar.uri,
+        },
+        campos: {
+          id: vistoriaAtiva.id,
+          latitude: String(localizacao.latitude),
+          longitude: String(localizacao.longitude),
+        },
+      });
+
+      const response = await fetch("/api/vistorias/concluirVistoria", {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": dados.contentType,
+        },
+        body: dados.body,
+      });
+
+      if (!response.ok) {
+        const respostaErro = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+
+        throw new Error(
+          respostaErro?.error ?? "Não foi possível concluir a vistoria.",
+        );
+      }
+
+      await concluirVistoriaLocal({
+        id: vistoriaAtiva.id,
+        latitude: localizacao.latitude,
+        longitude: localizacao.longitude,
+        photoMimeType: mimeType,
+      });
+      limparVistoriaAtiva();
+      setFotoParaConfirmar(null);
+      Alert.alert("Vistoria concluída", "A foto e a localização foram enviadas.");
+    } catch (error) {
+      console.error("Não foi possível concluir a vistoria.", error);
+      Alert.alert(
+        "Não foi possível concluir a vistoria",
+        error instanceof Error
+          ? error.message
+          : "Tente novamente em alguns instantes.",
+      );
+    } finally {
+      setEstaConcluindo(false);
+    }
+  };
 
   return (
     <ScrollView
@@ -36,7 +168,7 @@ export default function PaginaInicial() {
           </Box>
         </Box>
 
-        <MapaDaVistoria />
+        <MapaDaVistoria coordenadas={coordenadasAtuais} />
 
         <Box className="flex-row items-end justify-between bg-vistoria-superficie px-6 py-8">
           <Text className="text-[64px] font-bold leading-none text-vistoria-marca">
@@ -46,30 +178,50 @@ export default function PaginaInicial() {
             <Text className="text-lg font-bold text-vistoria-marca">
               {dataAtual}
             </Text>
-            <Text className="mt-2 text-sm font-semibold text-vistoria-titulo">
-              {vistoriaAtiva?.titulo ?? "Nenhum vistoria selecionada"}
+            <Text
+              className="mt-2 text-sm font-semibold text-vistoria-titulo"
+              numberOfLines={1}
+            >
+              {vistoriaAtiva
+                ? abreviarDescricao(vistoriaAtiva.titulo)
+                : "Nenhuma vistoria selecionada"}
             </Text>
           </Box>
         </Box>
 
         <Box className="px-6 pt-6">
-          <BotaoConcluirVistoria possuiVistoriaAtiva={possuiVistoriaAtiva} />
+          <BotaoConcluirVistoria
+            estaConcluindo={estaConcluindo}
+            onPress={capturarFoto}
+            onSelecionarVistoria={() => router.push("/vistorias")}
+            possuiVistoriaAtiva={possuiVistoriaAtiva}
+          />
         </Box>
 
-        {possuiVistoriaAtiva ? (
+        {vistoriaAtiva ? (
           <Box className="mx-6 mt-6 rounded-xl border border-vistoria-borda bg-vistoria-superficie p-5">
             <Text className="text-xl font-bold text-vistoria-titulo">
               Resumo da vistoria
             </Text>
             <Text className="mt-3 text-base leading-6 text-vistoria-auxiliar">
-              Nenhum dado disponível.
-            </Text>
-            <Text className="mt-1 text-sm leading-5 text-vistoria-auxiliar">
-              As informações serão exibidas nesta área.
+              {vistoriaAtiva.titulo}
             </Text>
           </Box>
         ) : null}
       </Box>
+
+      {fotoParaConfirmar ? (
+        <ConfirmarFotoVistoria
+          carregando={estaConcluindo}
+          fotoUri={fotoParaConfirmar.uri}
+          onCancelar={() => setFotoParaConfirmar(null)}
+          onConfirmar={confirmarConclusao}
+          onTirarOutra={() => {
+            setFotoParaConfirmar(null);
+            void capturarFoto();
+          }}
+        />
+      ) : null}
     </ScrollView>
   );
 }
