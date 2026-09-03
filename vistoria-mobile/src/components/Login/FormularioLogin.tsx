@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useRouter } from "expo-router";
 
@@ -61,8 +61,36 @@ export function FormularioLogin() {
   const [email, setEmail] = useState<Autenticacao["email"]>("");
   const [senha, setSenha] = useState<Autenticacao["senha"]>("");
   const [modalErro, setModalErro] = useState<boolean>(false);
+  const [estaVerificandoToken, setEstaVerificandoToken] = useState(true);
 
   const router = useRouter();
+
+  useEffect(() => {
+    let estaMontado = true;
+
+    const verificarTokenSalvo = async () => {
+      try {
+        const token = await AsyncStorage.getItem("accessToken");
+
+        if (token?.trim()) {
+          router.replace("/home");
+          return;
+        }
+      } catch (error) {
+        console.error("Não foi possível verificar o token salvo.", error);
+      } finally {
+        if (estaMontado) {
+          setEstaVerificandoToken(false);
+        }
+      }
+    };
+
+    void verificarTokenSalvo();
+
+    return () => {
+      estaMontado = false;
+    };
+  }, [router]);
 
   return (
     <>
@@ -89,7 +117,12 @@ export function FormularioLogin() {
       <Pressable
         accessibilityLabel="Fazer Login"
         accessibilityRole="button"
+        accessibilityState={{
+          busy: estaVerificandoToken,
+          disabled: estaVerificandoToken,
+        }}
         className="mt-8 h-14 items-center justify-center rounded-xl bg-vistoria-marca data-[active=true]:bg-vistoria-marca-pressionada"
+        disabled={estaVerificandoToken}
         onPress={async () => {
           try {
             const data = await login({ email, senha });
@@ -100,7 +133,9 @@ export function FormularioLogin() {
           }
         }}
       >
-        <Text className="text-lg font-bold text-white">Fazer Login</Text>
+        <Text className="text-lg font-bold text-white">
+          {estaVerificandoToken ? "Carregando..." : "Fazer Login"}
+        </Text>
       </Pressable>
 
       <Pressable

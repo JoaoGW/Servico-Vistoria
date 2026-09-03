@@ -12,19 +12,20 @@ import { Box } from "@/components/ui/box";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 
-import { useRelogioGlobal } from "@/hooks/use-relogio-global";
 import {
   obterCoordenadasAtuais,
   useLocalizacaoAtual,
 } from "@/hooks/use-localizacao-atual";
+import { useRelogioGlobal } from "@/hooks/use-relogio-global";
 import { useConexao } from "@/providers/ConexaoProvider";
+import { useVistoriaStore } from "@/stores/use-vistoria-store";
 
 import { concluirVistoriaLocal } from "@/db/sincronizacao";
+
 import {
   enfileirarConclusaoVistoria,
   enviarConclusaoVistoria,
 } from "@/services/sincronizacao-offline";
-import { useVistoriaStore } from "@/stores/use-vistoria-store";
 
 function abreviarDescricao(descricao: string) {
   return descricao.length > 20 ? `${descricao.slice(0, 20)}...` : descricao;
