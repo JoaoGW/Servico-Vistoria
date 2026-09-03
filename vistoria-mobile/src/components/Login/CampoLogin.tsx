@@ -10,6 +10,8 @@ interface ICampoLoginProps {
   label: string;
   placeholder: string;
   tipo: "email" | "senha";
+  value: string;
+  setValue: (value: string) => void;
 }
 
 export function CampoLogin({
@@ -17,6 +19,8 @@ export function CampoLogin({
   label,
   placeholder,
   tipo,
+  value,
+  setValue,
 }: ICampoLoginProps) {
   const eCampoDeSenha = tipo === "senha";
 
@@ -34,6 +38,8 @@ export function CampoLogin({
           keyboardType={eCampoDeSenha ? "default" : "email-address"}
           placeholder={placeholder}
           secureTextEntry={eCampoDeSenha}
+          value={value}
+          onChangeText={(v: string) => setValue(v)}
         />
       </Input>
     </Box>
