@@ -1,18 +1,16 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState } from "react";
+
 import { IndicadorConexao } from "@/components/IndicadorConexao";
 import { AvisoSemDocumentos } from "@/components/ItensVazios/AvisoSemDocumentos";
+import { ListaDocumentos } from "@/components/ListaDocumentos";
 import { Box } from "@/components/ui/box";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
-
-export interface Documento {
-  createdAt: string;
-  fileMimeType:
-    | "application/pdf"
-    | "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-  fileName: string;
-  id: string;
-  title: string;
-}
+import { database } from "@/db";
+import { DocumentoModel } from "@/db/models/Documento";
+import { sincronizarDocumentos } from "@/db/sincronizacao";
+import type { DocumentoApi } from "@/db/types";
 
 /**
  * Busca todos os documentos disponíveis para o usuário autenticado.
@@ -33,10 +31,41 @@ const visualizarDocumentos = async (token: string) => {
     throw new Error("Não foi possível recuperar os documentos.");
   }
 
-  return response.json() as Promise<Documento[]>;
+  return response.json() as Promise<DocumentoApi[]>;
 };
 
 export default function PaginaDocumentos() {
+  const [documentos, setDocumentos] = useState<DocumentoModel[]>([]);
+
+  useEffect(() => {
+    const inscricao = database
+      .get<DocumentoModel>("documentos")
+      .query()
+      .observe()
+      .subscribe(setDocumentos);
+
+    return () => inscricao.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const atualizarDocumentos = async () => {
+      const token = await AsyncStorage.getItem("accessToken");
+
+      if (!token) {
+        return;
+      }
+
+      try {
+        const documentosApi = await visualizarDocumentos(token);
+        await sincronizarDocumentos(documentosApi);
+      } catch (error) {
+        console.error("Não foi possível atualizar os documentos locais.", error);
+      }
+    };
+
+    void atualizarDocumentos();
+  }, []);
+
   return (
     <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
       <Box className="flex-1 pb-8">
@@ -62,7 +91,11 @@ export default function PaginaDocumentos() {
             Documentos técnicos de suporte
           </Text>
           <Box className="mt-4">
-            <AvisoSemDocumentos />
+            {documentos.length ? (
+              <ListaDocumentos documentos={documentos} />
+            ) : (
+              <AvisoSemDocumentos />
+            )}
           </Box>
         </Box>
       </Box>

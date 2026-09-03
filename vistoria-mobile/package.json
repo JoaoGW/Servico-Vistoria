@@ -6,10 +6,13 @@
     "@expo/ui": "~57.0.15",
     "@gluestack-ui/core": "^3.0.25",
     "@gluestack-ui/utils": "^3.0.21",
+    "@nozbe/simdjson": "^3.9.4",
     "@nozbe/watermelondb": "^0.28.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~57.0.19",
+    "expo-build-properties": "~57.0.16",
     "expo-constants": "~57.0.17",
+    "expo-dev-client": "~57.0.18",
     "expo-device": "~57.0.1",
     "expo-font": "~57.0.3",
     "expo-glass-effect": "~57.0.1",
@@ -39,6 +42,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@babel/plugin-proposal-decorators": "^7.29.7",
     "@types/react": "~19.2.2",
     "typescript": "~6.0.3"
   },
@@ -46,7 +50,14 @@
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
-    "ios": "expo start --ios",
+    "build:android:local": "set -a && . ./.env.local && set +a && ANDROID_HOME=\"/Users/multscantec/Library/Android/sdk\" ANDROID_SDK_ROOT=\"/Users/multscantec/Library/Android/sdk\" eas build --platform android --local --non-interactive",
+    "build:android:local:development": "set -a && . ./.env.local && set +a && ANDROID_HOME=\"/Users/multscantec/Library/Android/sdk\" ANDROID_SDK_ROOT=\"/Users/multscantec/Library/Android/sdk\" eas build --platform android --profile development --local --non-interactive",
+    "build:android:local:apk": "set -a && . ./.env.local && set +a && ANDROID_HOME=\"/Users/multscantec/Library/Android/sdk\" ANDROID_SDK_ROOT=\"/Users/multscantec/Library/Android/sdk\" eas build --platform android --profile production-apk --local --non-interactive",
+    "build:android:cloud": "eas build --platform android",
+    "ios": "expo run:ios --device",
+    "build:ios:local": "set -a && . ./.env.local && set +a && PATH=\"/usr/bin:/bin:/usr/sbin:/sbin:${PATH}\" eas build --platform ios --local",
+    "build:ios:local:development": "set -a && . ./.env.local && set +a && PATH=\"/usr/bin:/bin:/usr/sbin:/sbin:${PATH}\" eas build --platform ios --local --profile development",
+    "build:ios:cloud": "eas build --platform ios",
     "lint": "expo lint"
   },
   "private": true
