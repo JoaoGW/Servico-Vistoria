@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { File } from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert } from "react-native";
 
@@ -19,6 +19,7 @@ import {
 } from "@/hooks/use-localizacao-atual";
 
 import { concluirVistoriaLocal } from "@/db/sincronizacao";
+import { criarCorpoMultipart } from "@/services/criar-corpo-multipart";
 import { useVistoriaStore } from "@/stores/use-vistoria-store";
 
 function abreviarDescricao(descricao: string) {
@@ -26,6 +27,7 @@ function abreviarDescricao(descricao: string) {
 }
 
 export default function PaginaInicial() {
+  const router = useRouter();
   const { dataAtual, horarioAtual } = useRelogioGlobal();
   const vistoriaAtiva = useVistoriaStore((estado) => estado.vistoriaAtiva);
   const limparVistoriaAtiva = useVistoriaStore(
@@ -79,32 +81,45 @@ export default function PaginaInicial() {
       const token = await AsyncStorage.getItem("accessToken");
 
       if (!token) {
-        throw new Error("Sua sessão expirou. Entre novamente para concluir a vistoria.");
+        throw new Error(
+          "Sua sessão expirou. Entre novamente para concluir a vistoria.",
+        );
       }
 
       const mimeType = fotoParaConfirmar.mimeType ?? "image/jpeg";
       const nomeArquivo =
         fotoParaConfirmar.fileName ?? `vistoria-${vistoriaAtiva.id}.jpg`;
-      const dados = new FormData();
-      const arquivoFoto = new File(fotoParaConfirmar.uri);
-      const foto = new Blob([await arquivoFoto.arrayBuffer()], {
-        type: mimeType,
+      const dados = await criarCorpoMultipart({
+        arquivo: {
+          campo: "photo",
+          mimeType,
+          nome: nomeArquivo,
+          uri: fotoParaConfirmar.uri,
+        },
+        campos: {
+          id: vistoriaAtiva.id,
+          latitude: String(localizacao.latitude),
+          longitude: String(localizacao.longitude),
+        },
       });
-      dados.append("id", vistoriaAtiva.id);
-      dados.append("latitude", String(localizacao.latitude));
-      dados.append("longitude", String(localizacao.longitude));
-      dados.append("photo", foto, nomeArquivo);
 
       const response = await fetch("/api/vistorias/concluirVistoria", {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": dados.contentType,
         },
-        body: dados,
+        body: dados.body,
       });
 
       if (!response.ok) {
-        throw new Error("Não foi possível concluir a vistoria.");
+        const respostaErro = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+
+        throw new Error(
+          respostaErro?.error ?? "Não foi possível concluir a vistoria.",
+        );
       }
 
       await concluirVistoriaLocal({
@@ -178,20 +193,18 @@ export default function PaginaInicial() {
           <BotaoConcluirVistoria
             estaConcluindo={estaConcluindo}
             onPress={capturarFoto}
+            onSelecionarVistoria={() => router.push("/vistorias")}
             possuiVistoriaAtiva={possuiVistoriaAtiva}
           />
         </Box>
 
-        {possuiVistoriaAtiva ? (
+        {vistoriaAtiva ? (
           <Box className="mx-6 mt-6 rounded-xl border border-vistoria-borda bg-vistoria-superficie p-5">
             <Text className="text-xl font-bold text-vistoria-titulo">
               Resumo da vistoria
             </Text>
             <Text className="mt-3 text-base leading-6 text-vistoria-auxiliar">
-              Nenhum dado disponível.
-            </Text>
-            <Text className="mt-1 text-sm leading-5 text-vistoria-auxiliar">
-              As informações serão exibidas nesta área.
+              {vistoriaAtiva.titulo}
             </Text>
           </Box>
         ) : null}

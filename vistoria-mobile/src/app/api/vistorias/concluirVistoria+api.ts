@@ -5,6 +5,36 @@
  * @returns Retorna a vistoria concluída ou o erro retornado pela API.
  * @throws Retorna erro quando a API externa falhar.
  */
+function anexarCampoMultipart(
+  corpo: Uint8Array,
+  boundary: string,
+  nome: string,
+  valor: string,
+) {
+  const codificador = new TextEncoder();
+  const encerramento = codificador.encode(`--${boundary}--\r\n`);
+  const inicioDoEncerramento = corpo.length - encerramento.length;
+
+  if (
+    inicioDoEncerramento < 0 ||
+    !encerramento.every(
+      (byte, indice) => corpo[inicioDoEncerramento + indice] === byte,
+    )
+  ) {
+    throw new Error("O corpo multipart recebido não possui um encerramento válido.");
+  }
+
+  const novoCampo = codificador.encode(
+    `--${boundary}\r\nContent-Disposition: form-data; name="${nome}"\r\n\r\n${valor}\r\n--${boundary}--\r\n`,
+  );
+  const resultado = new Uint8Array(inicioDoEncerramento + novoCampo.length);
+
+  resultado.set(corpo.slice(0, inicioDoEncerramento));
+  resultado.set(novoCampo, inicioDoEncerramento);
+
+  return resultado;
+}
+
 export async function PUT(request: Request) {
   try {
     if (request.method !== "PUT") {
@@ -19,7 +49,8 @@ export async function PUT(request: Request) {
       );
     }
 
-    const formData = await request.formData();
+    const requisicaoParaFormulario = request.clone();
+    const formData = await requisicaoParaFormulario.formData();
     const [id] = formData.getAll("id");
     const [photo] = formData.getAll("photo");
     const [latitude] = formData.getAll("latitude");
@@ -40,7 +71,22 @@ export async function PUT(request: Request) {
       );
     }
 
-    formData.append("pendente", "false");
+    const contentType = request.headers.get("Content-Type");
+    const boundary = contentType?.match(/boundary=([^;]+)/i)?.[1];
+
+    if (!boundary) {
+      return Response.json(
+        { error: "O envio da vistoria não possui um boundary multipart válido." },
+        { status: 400 },
+      );
+    }
+
+    const corpo = anexarCampoMultipart(
+      new Uint8Array(await request.arrayBuffer()),
+      boundary.replace(/^"|"$/g, ""),
+      "pendente",
+      "false",
+    );
 
     const headers = new Headers({
       Accept: "application/json",
@@ -50,19 +96,22 @@ export async function PUT(request: Request) {
     if (authorization) {
       headers.set("Authorization", authorization);
     }
+    headers.set("Content-Type", contentType);
 
     const apiUrl = process.env.APIS_URL + "/vistorias/" + id;
 
     const response = await fetch(apiUrl, {
       method: "PUT",
       headers,
-      body: formData as unknown as Blob,
+      body: corpo,
     });
 
     if (!response.ok) {
+      const detalhe = await response.text();
+
       return Response.json(
         {
-          error: "Erro no processo de response da API - Concluir Vistoria",
+          error: detalhe || "Não foi possível concluir a vistoria na API.",
         },
         { status: response.status },
       );

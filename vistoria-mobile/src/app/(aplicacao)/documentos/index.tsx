@@ -101,7 +101,13 @@ export default function PaginaDocumentos() {
       });
 
       if (!response.ok) {
-        throw new Error("Não foi possível baixar o documento.");
+        const respostaErro = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+
+        throw new Error(
+          respostaErro?.error ?? "Não foi possível baixar o documento.",
+        );
       }
 
       const arquivo = new File(

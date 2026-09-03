@@ -1,15 +1,14 @@
+import type { RequestHandler } from "expo-router/server";
+
 /**
  * Busca o arquivo vinculado a um documento.
  *
  * @param request - Requisição usada para encaminhar a autorização do usuário.
- * @param context - Contexto com o identificador do documento.
+ * @param params - Parâmetros dinâmicos da rota, incluindo o identificador do documento.
  * @returns Retorna o arquivo do documento ou o erro retornado pela API.
  * @throws Retorna erro quando a API externa falhar.
  */
-export async function GET(
-  request: Request,
-  context: { params: Promise<{ id: string }> },
-) {
+export const GET: RequestHandler = async (request, { id }) => {
   try {
     if (request.method !== "GET") {
       return Response.json(
@@ -23,7 +22,6 @@ export async function GET(
       );
     }
 
-    const { id } = await context.params;
     const headers = new Headers({ Accept: "*/*" });
     const authorization = request.headers.get("Authorization");
 
@@ -37,17 +35,34 @@ export async function GET(
     });
 
     if (!response.ok) {
+      const detalhe = await response.text();
+
       return Response.json(
-        { error: "Erro ao recuperar o arquivo do documento." },
+        {
+          error:
+            detalhe || "Erro ao recuperar o arquivo do documento.",
+        },
         { status: response.status },
       );
     }
 
-    return new Response(response.body, { headers: response.headers });
+    const arquivo = await response.arrayBuffer();
+    const contentType =
+      response.headers.get("content-type") ?? "application/octet-stream";
+    const contentDisposition = response.headers.get("content-disposition");
+    const cabecalhosDaResposta = new Headers({
+      "Content-Type": contentType,
+    });
+
+    if (contentDisposition) {
+      cabecalhosDaResposta.set("Content-Disposition", contentDisposition);
+    }
+
+    return new Response(arquivo, { headers: cabecalhosDaResposta });
   } catch (error) {
     return Response.json(
       { error: "Erro encontrado ao recuperar o arquivo do documento: " + error },
       { status: 500 },
     );
   }
-}
+};
