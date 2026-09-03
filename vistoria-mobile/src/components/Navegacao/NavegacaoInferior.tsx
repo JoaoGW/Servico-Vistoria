@@ -25,7 +25,12 @@ const itensNavegacao = [
     titulo: "Vistoria",
   },
   { destino: "/", icone: House, identificador: "home", titulo: "Home" },
-  { icone: FileText, identificador: "documentos", titulo: "Documentos" },
+  {
+    destino: "/documentos",
+    icone: FileText,
+    identificador: "documentos",
+    titulo: "Documentos",
+  },
 ] satisfies IItemNavegacao[];
 
 export function NavegacaoInferior({ abaAtiva }: INavegacaoInferiorProps) {

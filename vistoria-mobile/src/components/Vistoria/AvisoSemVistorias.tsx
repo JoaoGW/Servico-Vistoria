@@ -1,18 +1,7 @@
 import { CircleAlert } from 'lucide-react-native'
 
-import { Box } from '@/components/ui/box'
-import { Icon } from '@/components/ui/icon'
-import { Text } from '@/components/ui/text'
+import { AvisoSemRegistros } from '@/components/EstadosVazios/AvisoSemRegistros'
 
 export function AvisoSemVistorias() {
-  return (
-    <Box
-      accessibilityRole="alert"
-      className="flex-row items-center rounded-xl border border-vistoria-borda bg-vistoria-superficie p-4">
-      <Icon as={CircleAlert} className="mr-3 text-vistoria-marca" size="lg" />
-      <Text className="flex-1 text-base leading-6 text-vistoria-auxiliar">
-        Não há vistorias cadastradas ainda.
-      </Text>
-    </Box>
-  )
+  return <AvisoSemRegistros icone={CircleAlert} mensagem="Não há vistorias cadastradas ainda." />
 }
