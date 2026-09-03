@@ -15,30 +15,6 @@ import { Text } from "@/components/ui/text";
 
 import { database } from "@/db";
 import { DocumentoModel } from "@/db/models/Documento";
-import { sincronizarDocumentos } from "@/db/sincronizacao";
-import type { DocumentoApi } from "@/db/types";
-
-/**
- * Busca todos os documentos disponíveis para o usuário autenticado.
- *
- * @param token - Token JWT usado na autorização da requisição.
- * @returns Retorna a lista de documentos cadastrados.
- * @throws Will throw an error if the request fails or the response is not successful.
- */
-const visualizarDocumentos = async (token: string) => {
-  const response = await fetch("/api/documentos/recuperarDocumentos", {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("Não foi possível recuperar os documentos.");
-  }
-
-  return response.json() as Promise<DocumentoApi[]>;
-};
 
 function obterNomeSeguroArquivo(documento: DocumentoModel) {
   const nome = documento.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -60,28 +36,6 @@ export default function PaginaDocumentos() {
       .subscribe(setDocumentos);
 
     return () => inscricao.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const atualizarDocumentos = async () => {
-      const token = await AsyncStorage.getItem("accessToken");
-
-      if (!token) {
-        return;
-      }
-
-      try {
-        const documentosApi = await visualizarDocumentos(token);
-        await sincronizarDocumentos(documentosApi);
-      } catch (error) {
-        console.error(
-          "Não foi possível atualizar os documentos locais.",
-          error,
-        );
-      }
-    };
-
-    void atualizarDocumentos();
   }, []);
 
   const abrirDocumento = async (documento: DocumentoModel) => {

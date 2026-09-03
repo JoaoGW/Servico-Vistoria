@@ -1,7 +1,7 @@
 import { appSchema, tableSchema } from "@nozbe/watermelondb";
 
 export const schema = appSchema({
-  version: 1,
+  version: 2,
   tables: [
     tableSchema({
       name: "documentos",
@@ -24,6 +24,18 @@ export const schema = appSchema({
         { name: "pendente", type: "boolean" },
         { name: "created_at", type: "number" },
         { name: "updated_at", type: "number" },
+      ],
+    }),
+    tableSchema({
+      name: "conclusoes_pendentes",
+      columns: [
+        { name: "vistoria_id", type: "string", isIndexed: true },
+        { name: "latitude", type: "number" },
+        { name: "longitude", type: "number" },
+        { name: "foto_uri", type: "string" },
+        { name: "foto_mime_type", type: "string" },
+        { name: "foto_nome", type: "string" },
+        { name: "criada_em", type: "number" },
       ],
     }),
   ],

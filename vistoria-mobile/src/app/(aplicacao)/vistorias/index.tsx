@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 
 import { IndicadorConexao } from "@/components/IndicadorConexao";
@@ -10,31 +9,7 @@ import { Text } from "@/components/ui/text";
 
 import { database } from "@/db";
 import { VistoriaModel } from "@/db/models/Vistoria";
-import { sincronizarVistorias } from "@/db/sincronizacao";
-import type { VistoriaApi } from "@/db/types";
 import { Q } from "@nozbe/watermelondb";
-
-/**
- * Busca todas as vistorias disponíveis para o usuário autenticado.
- *
- * @param token - Token JWT usado na autorização da requisição.
- * @returns Retorna a lista de vistorias cadastradas.
- * @throws Will throw an error if the request fails or the response is not successful.
- */
-const visualizarVistorias = async (token: string) => {
-  const response = await fetch("/api/vistorias/verVistorias", {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("Não foi possível recuperar as vistorias.");
-  }
-
-  return response.json() as Promise<VistoriaApi[]>;
-};
 
 export default function PaginaVistorias() {
   const [vistorias, setVistorias] = useState<VistoriaModel[]>([]);
@@ -47,25 +22,6 @@ export default function PaginaVistorias() {
       .subscribe(setVistorias);
 
     return () => inscricao.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const atualizarVistorias = async () => {
-      const token = await AsyncStorage.getItem("accessToken");
-
-      if (!token) {
-        return;
-      }
-
-      try {
-        const vistoriasApi = await visualizarVistorias(token);
-        await sincronizarVistorias(vistoriasApi);
-      } catch (error) {
-        console.error("Não foi possível atualizar as vistorias locais.", error);
-      }
-    };
-
-    void atualizarVistorias();
   }, []);
 
   return (
