@@ -1,7 +1,7 @@
-import type { VistoriaModel } from "@/db/models/Vistoria";
-
 import { Box } from "@/components/ui/box";
 import { Text } from "@/components/ui/text";
+
+import type { VistoriaModel } from "@/db/models/Vistoria";
 
 interface IListaVistoriasProps {
   vistorias: VistoriaModel[];

@@ -1,8 +1,8 @@
-import { CircleCheck } from "lucide-react-native";
-
 import { Icon } from "@/components/ui/icon";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
+
+import { CircleCheck } from "lucide-react-native";
 
 interface IBotaoConcluirVistoriaProps {
   possuiVistoriaAtiva: boolean;

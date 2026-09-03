@@ -4,7 +4,9 @@ import { IndicadorConexao } from "@/components/IndicadorConexao";
 import { Box } from "@/components/ui/box";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
+
 import { useRelogioGlobal } from "@/hooks/use-relogio-global";
+
 import { useVistoriaStore } from "@/stores/use-vistoria-store";
 
 export default function PaginaInicial() {

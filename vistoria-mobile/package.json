@@ -44,12 +44,15 @@
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^7.29.7",
     "@types/react": "~19.2.2",
+    "patch-package": "^8.0.1",
     "typescript": "~6.0.3"
   },
   "scripts": {
+    "postinstall": "patch-package",
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
+    "android": "expo start --dev-client --android",
+    "run:android": "expo run:android",
     "build:android:local": "set -a && . ./.env.local && set +a && ANDROID_HOME=\"/Users/multscantec/Library/Android/sdk\" ANDROID_SDK_ROOT=\"/Users/multscantec/Library/Android/sdk\" eas build --platform android --local --non-interactive",
     "build:android:local:development": "set -a && . ./.env.local && set +a && ANDROID_HOME=\"/Users/multscantec/Library/Android/sdk\" ANDROID_SDK_ROOT=\"/Users/multscantec/Library/Android/sdk\" eas build --platform android --profile development --local --non-interactive",
     "build:android:local:apk": "set -a && . ./.env.local && set +a && ANDROID_HOME=\"/Users/multscantec/Library/Android/sdk\" ANDROID_SDK_ROOT=\"/Users/multscantec/Library/Android/sdk\" eas build --platform android --profile production-apk --local --non-interactive",

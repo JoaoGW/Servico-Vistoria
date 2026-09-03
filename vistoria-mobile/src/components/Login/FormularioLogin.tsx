@@ -1,7 +1,8 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useState } from "react";
 
 import { useRouter } from "expo-router";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { Box } from "@/components/ui/box";
 import { Pressable } from "@/components/ui/pressable";

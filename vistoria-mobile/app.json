@@ -4,10 +4,7 @@
     "slug": "vistoria-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "platforms": [
-      "ios",
-      "android"
-    ],
+    "platforms": ["ios", "android"],
     "icon": "./assets/images/icon.png",
     "scheme": "vistoriamobile",
     "userInterfaceStyle": "automatic",
@@ -15,7 +12,7 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
-      "package": "com.multscan.vistoriamobile",
+      "package": "com.peacore.vistoriamobile",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

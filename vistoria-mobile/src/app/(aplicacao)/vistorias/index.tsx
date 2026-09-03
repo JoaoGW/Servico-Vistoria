@@ -1,5 +1,4 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Q } from "@nozbe/watermelondb";
 import { useEffect, useState } from "react";
 
 import { IndicadorConexao } from "@/components/IndicadorConexao";
@@ -8,10 +7,12 @@ import { ListaVistorias } from "@/components/ListaVistorias";
 import { Box } from "@/components/ui/box";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
+
 import { database } from "@/db";
 import { VistoriaModel } from "@/db/models/Vistoria";
 import { sincronizarVistorias } from "@/db/sincronizacao";
 import type { VistoriaApi } from "@/db/types";
+import { Q } from "@nozbe/watermelondb";
 
 /**
  * Busca todas as vistorias disponíveis para o usuário autenticado.

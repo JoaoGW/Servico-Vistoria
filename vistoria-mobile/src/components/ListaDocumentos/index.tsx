@@ -1,7 +1,7 @@
-import type { DocumentoModel } from "@/db/models/Documento";
-
 import { Box } from "@/components/ui/box";
 import { Text } from "@/components/ui/text";
+
+import type { DocumentoModel } from "@/db/models/Documento";
 
 interface IListaDocumentosProps {
   documentos: DocumentoModel[];

@@ -7,6 +7,7 @@ import { ListaDocumentos } from "@/components/ListaDocumentos";
 import { Box } from "@/components/ui/box";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
+
 import { database } from "@/db";
 import { DocumentoModel } from "@/db/models/Documento";
 import { sincronizarDocumentos } from "@/db/sincronizacao";
@@ -59,7 +60,10 @@ export default function PaginaDocumentos() {
         const documentosApi = await visualizarDocumentos(token);
         await sincronizarDocumentos(documentosApi);
       } catch (error) {
-        console.error("Não foi possível atualizar os documentos locais.", error);
+        console.error(
+          "Não foi possível atualizar os documentos locais.",
+          error,
+        );
       }
     };
 
