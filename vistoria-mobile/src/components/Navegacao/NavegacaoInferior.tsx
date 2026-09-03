@@ -24,7 +24,7 @@ const itensNavegacao = [
     identificador: "vistoria",
     titulo: "Vistoria",
   },
-  { destino: "/", icone: House, identificador: "home", titulo: "Home" },
+  { destino: "/home", icone: House, identificador: "home", titulo: "Home" },
   {
     destino: "/documentos",
     icone: FileText,

@@ -1,4 +1,4 @@
-import { AvisoSemDocumentos } from "@/components/Documentos/AvisoSemDocumentos";
+import { AvisoSemDocumentos } from "@/components/EstadosVazios/AvisoSemDocumentos";
 import { Box } from "@/components/ui/box";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
