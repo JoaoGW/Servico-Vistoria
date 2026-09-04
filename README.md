@@ -9,12 +9,15 @@ centraliza autenticação, dados e arquivos.
 
 - [Arquitetura](#arquitetura)
 - [Fluxo de vistoria](#fluxo-de-vistoria)
+- [Estratégia de sincronização e tratamento de conflitos](#estratégia-de-sincronização-e-tratamento-de-conflitos)
 - [Pré-requisitos](#pré-requisitos)
 - [Configuração de ambiente](#configuração-de-ambiente)
 - [Instalação e primeira execução](#instalação-e-primeira-execução)
+- [Guia completo de execução](#guia-completo-de-execução)
 - [Rotas principais da API](#rotas-principais-da-api)
 - [Comandos de desenvolvimento](#comandos-de-desenvolvimento)
 - [Estrutura de dados e arquivos](#estrutura-de-dados-e-arquivos)
+- [Melhorias planejadas](#melhorias-planejadas)
 - [Segurança e limites conhecidos](#segurança-e-limites-conhecidos)
 
 ## Arquitetura
@@ -47,10 +50,39 @@ conexão, e encaminha chamadas por API Routes do Expo Router.
 6. Vistorias e documentos podem ser excluídos pelo portal após resposta
    positiva da API.
 
+## Estratégia de sincronização e tratamento de conflitos
+
+O aplicativo mobile é offline-first para a conclusão de vistorias. Sem rede,
+ele persiste no WatermelonDB/SQLite os dados da conclusão e uma cópia da foto
+em armazenamento persistente do dispositivo. A fila é processada em ordem
+crescente de `completedAt` ao recuperar a conectividade ou quando o usuário
+solicita a sincronização manualmente.
+
+`completedAt` é capturado no instante de confirmação da conclusão, antes de
+obter a localização, e acompanha tanto o envio online quanto a fila offline. A
+API aplica a atualização de forma atômica: se ainda não houver conclusão,
+aceita o registro; em concorrência, a menor marca de tempo vence. Em empate,
+vence a conclusão já persistida. A conclusão é terminal: uma vistoria concluída
+não pode voltar a pendente nem ter seus dados de conclusão substituídos por uma
+atualização posterior.
+
+Quando uma tentativa perde a disputa, a API responde `409` com o código
+`INSPECTION_COMPLETION_CONFLICT` e devolve a vistoria canônica. O mobile remove
+a pendência e a foto locais perdedoras, atualiza suas listas a partir da API e
+comunica o conflito ao usuário. Isso evita reenvios indefinidos e mantém uma
+única versão vencedora.
+
+## Guia completo de execução
+
+Consulte [HOW_TO_RUN.md](HOW_TO_RUN.md) para preparar um computador novo e
+executar o projeto por Docker ou localmente. O guia inclui configuração de
+ambiente, banco e schema, portal, aplicativo mobile, verificações, backup,
+troubleshooting e os limites da execução nativa do mobile.
+
 ## Pré-requisitos
 
 - Git 2.30 ou superior;
-- Node.js 20 LTS ou superior (Node 22+ é recomendado);
+- Node.js 24 LTS, a mesma versão de referência usada nas imagens Docker;
 - npm 10 ou superior;
 - PostgreSQL 14 ou superior, em execução e acessível localmente ou pela rede;
 - Android Studio/emulador Android ou Xcode/dispositivo iOS para o aplicativo
@@ -351,6 +383,33 @@ hooks e variáveis não usadas nesse material. Esse resultado deve ser tratado
 antes de tornar o lint uma etapa obrigatória de CI. Para validar apenas o
 portal mantido, execute `npx eslint app components utils` em `vistoria-web/`.
 
+## Melhorias planejadas
+
+- Substituir o uso de `drizzle-kit push` fora do desenvolvimento por migrações
+  versionadas, revisadas e aplicadas por pipeline, com backup e plano de
+  reversão para cada alteração de schema.
+- Cobrir autenticação, upload, conclusão de vistoria e conflito `409` com
+  testes de unidade, integração e ponta a ponta; tornar lint, build e testes
+  verificações obrigatórias no CI.
+- Implantar health checks de negócio, logs estruturados, métricas, rastreamento
+  de erros e alertas para API, banco, uploads e fila de sincronização.
+- Mover fotos e documentos de colunas binárias do PostgreSQL para
+  armazenamento de objetos com checksum, varredura antimalware, retenção e
+  backup apropriados.
+- Evoluir a autenticação para cookie `HttpOnly` no portal e armazenamento
+  seguro no mobile, com expiração consistente do token e autorização por
+  recurso no backend.
+- Proteger as rotas web no servidor e validar a assinatura do JWT na camada
+  BFF, em vez de apenas extrair o identificador do payload.
+- Auto-hospedar as fontes do portal e corrigir o material de referência que
+  hoje impede o lint global do frontend.
+- Evoluir a sincronização mobile com `operationId`, versão por entidade, cursor
+  incremental, retentativa persistente e telemetria, preservando a regra de
+  menor `completedAt` e a conclusão terminal.
+- Implantar as API Routes do Expo Router em uma origem HTTPS configurada para
+  builds nativos e testar permissões, fila offline e recuperação após
+  interrupção de rede em dispositivos reais.
+
 ## Segurança e limites conhecidos
 
 - O portal usa `sessionStorage` e o aplicativo usa `AsyncStorage` para o token.
@@ -361,12 +420,15 @@ portal mantido, execute `npx eslint app components utils` em `vistoria-web/`.
 - Foto, localização e documentos podem conter dados pessoais. Defina retenção,
   acesso mínimo, auditoria, backup e exclusão conforme a política aplicável.
 - A fila offline mobile ainda não possui identificador idempotente,
-  versionamento, cursor incremental ou resolução explícita de conflitos.
+  versionamento por entidade ou cursor incremental. O conflito de conclusão de
+  vistoria possui a regra específica baseada em `completedAt`; os demais fluxos
+  ainda não contam com um protocolo genérico de resolução de conflitos.
 - O mapa do portal usa tiles públicos do OpenStreetMap; respeite a política do
   provedor e avalie um provedor próprio para produção em maior escala.
 
 ## Documentação complementar
 
+- [Guia completo de execução](HOW_TO_RUN.md)
 - [API de domínio](vistoria-back/README.md)
 - [Portal web](vistoria-web/README.md)
 - [Contratos de integração web](vistoria-web/docs/REQUISICOES_API.md)

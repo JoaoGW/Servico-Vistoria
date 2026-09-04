@@ -1,0 +1,120 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Defina POSTGRES_DB no arquivo .env.}
+      POSTGRES_USER: ${POSTGRES_USER:?Defina POSTGRES_USER no arquivo .env.}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env.}
+      POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --username=$$POSTGRES_USER --dbname=$$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - database
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 100
+
+  migrate:
+    build:
+      context: ./vistoria-back
+      target: migration
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Defina DATABASE_URL no arquivo .env.}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - database
+    mem_limit: 384m
+    cpus: 0.5
+    pids_limit: 100
+
+  api:
+    build:
+      context: ./vistoria-back
+      target: runner
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Defina DATABASE_URL no arquivo .env.}
+      JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET no arquivo .env.}
+      PORT: "3001"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "${API_PORT:-3001}:3001"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:' + process.env.PORT + '/usuarios').then((response) => process.exit(response.status === 401 ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - application
+      - database
+    mem_limit: 512m
+    cpus: 0.75
+    pids_limit: 150
+
+  web:
+    build:
+      context: ./vistoria-web
+      target: runner
+    environment:
+      APIS_URL: ${APIS_URL:-http://api:3001}
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:' + process.env.PORT).then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+      - /app/.next/cache:rw,noexec,nosuid,mode=1777,size=64m
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - application
+    mem_limit: 512m
+    cpus: 0.75
+    pids_limit: 150
+
+volumes:
+  postgres_data:
+
+networks:
+  application:
+  database:
+    internal: true
