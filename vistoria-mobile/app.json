@@ -24,9 +24,6 @@
       },
       "predictiveBackGestureEnabled": false
     },
-    "web": {
-      "output": "server"
-    },
     "plugins": [
       "expo-router",
       [

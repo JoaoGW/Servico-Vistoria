@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+.env
+.env.*
+.git
+.github
+.postman
+.DS_Store
+npm-debug.log*
+*.tsbuildinfo

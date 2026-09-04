@@ -8,6 +8,7 @@ export interface DocumentoApi {
 }
 
 export interface VistoriaApi {
+  completedAt: string | null;
   createdAt: string;
   description: string;
   id: string;

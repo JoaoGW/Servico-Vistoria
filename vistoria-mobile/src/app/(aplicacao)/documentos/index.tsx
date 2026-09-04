@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Alert, Platform } from "react-native";
 
 import { File, Paths } from "expo-file-system";
@@ -7,6 +7,7 @@ import * as IntentLauncher from "expo-intent-launcher";
 import * as Sharing from "expo-sharing";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "expo-router";
 
 import { IndicadorConexao } from "@/components/IndicadorConexao";
 import { AvisoSemDocumentos } from "@/components/ItensVazios/AvisoSemDocumentos";
@@ -17,6 +18,8 @@ import { Text } from "@/components/ui/text";
 
 import { database } from "@/db";
 import { DocumentoModel } from "@/db/models/Documento";
+import { useConexao } from "@/providers/ConexaoProvider";
+import { sincronizarDocumentosComApi } from "@/services/sincronizacao-offline";
 
 function obterNomeSeguroArquivo(documento: DocumentoModel) {
   const nome = documento.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -26,6 +29,7 @@ function obterNomeSeguroArquivo(documento: DocumentoModel) {
 
 export default function PaginaDocumentos() {
   const [documentos, setDocumentos] = useState<DocumentoModel[]>([]);
+  const { estaOnline } = useConexao();
   const [documentoAbrindoId, setDocumentoAbrindoId] = useState<string | null>(
     null,
   );
@@ -40,6 +44,18 @@ export default function PaginaDocumentos() {
     return () => inscricao.unsubscribe();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      if (!estaOnline) {
+        return;
+      }
+
+      void sincronizarDocumentosComApi().catch((error) => {
+        console.error("Não foi possível atualizar os documentos.", error);
+      });
+    }, [estaOnline]),
+  );
+
   const abrirDocumento = async (documento: DocumentoModel) => {
     setDocumentoAbrindoId(documento.id);
 
@@ -52,7 +68,13 @@ export default function PaginaDocumentos() {
         );
       }
 
-      const response = await fetch(`/api/documentos/${documento.id}/arquivo`, {
+      const apiUrl =
+        process.env.EXPO_PUBLIC_API_URL +
+        "/documentos/" +
+        documento.id +
+        "/arquivo";
+
+      const response = await fetch(apiUrl, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

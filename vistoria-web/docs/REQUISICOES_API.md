@@ -32,6 +32,8 @@ APIS_URL=http://localhost:3001
 | `/api/auth/cadastrarUsuario` | `POST` | `/usuarios` | `{ "email", "password" }` | Não encaminhada. |
 | `/api/vistorias` | `GET` | `/vistorias` | Sem corpo | Encaminha `Authorization` se presente. |
 | `/api/vistorias` | `POST` | `/vistorias` | `{ "description" }` | `Bearer` obrigatório no Backend for Frontend (BFF). |
+| `/api/vistorias/:id` | `DELETE` | `/vistorias/:id` | Sem corpo | Encaminha `Authorization` se presente. |
+| `/api/vistorias/:id/foto` | `GET` | `/vistorias/:id/foto` | Sem corpo | Encaminha `Authorization` se presente. |
 | `/api/documentos` | `GET` | `/documentos` | Sem corpo | Encaminha `Authorization` se presente. |
 | `/api/documentos` | `POST` | `/documentos` | `multipart/form-data` com `title` e `file` | Encaminha `Authorization` se presente. |
 | `/api/documentos/:id` | `PUT` | `/documentos` | `multipart/form-data`; o Backend for Frontend (BFF) inclui `id` no formulário | Encaminha `Authorization` se presente. |
@@ -53,14 +55,32 @@ A interface trata uma vistoria retornada pela API externa com o seguinte formato
 ```ts
 interface Vistoria {
   id: string
+  userId: string
   description: string
+  photoMimeType: string | null
   latitude: number | null
   longitude: number | null
   pendente: boolean
+  completedAt: string | null
   createdAt: string
   updatedAt: string
 }
 ```
+
+Para uma conclusão, a API retorna `completedAt`. A tela de detalhes usa esse
+campo como **Finalizado em**; `updatedAt` não determina a precedência da
+conclusão.
+
+`PUT /vistorias/:id` exige `completedAt` ISO-8601 junto a `pendente: false`.
+Uma vistoria concluída é terminal. Se a marcação recebida tiver horário igual
+ou posterior ao já persistido, a API responde `409` com o código
+`INSPECTION_COMPLETION_CONFLICT` e a vistoria vencedora.
+
+As listagens devolvem o tipo MIME da foto, mas não o binário. A foto de uma
+vistoria concluída é obtida de forma autenticada em
+`GET /api/vistorias/:id/foto`; a resposta preserva o fluxo de bytes e os
+cabeçalhos enviados pela API de domínio. A exclusão é encaminhada pelo
+`DELETE /api/vistorias/:id`.
 
 Na criação, o Route Handler exige `Bearer`, decodifica o payload do JWT e encaminha:
 

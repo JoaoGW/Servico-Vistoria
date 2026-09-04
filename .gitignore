@@ -1,0 +1,4 @@
+# Arquivo local com credenciais do Docker Compose.
+.env
+.env.*
+!.env.example

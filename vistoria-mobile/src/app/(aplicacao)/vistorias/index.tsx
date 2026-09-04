@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+import { useFocusEffect } from "expo-router";
 
 import { IndicadorConexao } from "@/components/IndicadorConexao";
 import { AvisoSemVistorias } from "@/components/ItensVazios/AvisoSemVistorias";
@@ -9,10 +11,13 @@ import { Text } from "@/components/ui/text";
 
 import { database } from "@/db";
 import { VistoriaModel } from "@/db/models/Vistoria";
+import { useConexao } from "@/providers/ConexaoProvider";
+import { sincronizarVistoriasComApi } from "@/services/sincronizacao-offline";
 import { Q } from "@nozbe/watermelondb";
 
 export default function PaginaVistorias() {
   const [vistorias, setVistorias] = useState<VistoriaModel[]>([]);
+  const { estaOnline } = useConexao();
 
   useEffect(() => {
     const inscricao = database
@@ -23,6 +28,18 @@ export default function PaginaVistorias() {
 
     return () => inscricao.unsubscribe();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!estaOnline) {
+        return;
+      }
+
+      void sincronizarVistoriasComApi().catch((error) => {
+        console.error("Não foi possível atualizar as vistorias.", error);
+      });
+    }, [estaOnline]),
+  );
 
   return (
     <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>

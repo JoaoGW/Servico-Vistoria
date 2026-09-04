@@ -6,7 +6,7 @@
 2. **O banco local é a fonte de leitura do aplicativo.** As telas de vistorias e documentos observam o WatermelonDB; a API atualiza essa cópia, em vez de ser consultada diretamente por cada tela.
 3. **A API de domínio continua sendo a fonte compartilhada de verdade.** O aplicativo mantém uma cópia de trabalho local e a API externa consolida os dados que serão vistos por outros clientes.
 4. **Arquivos e metadados têm tratamentos distintos.** Metadados de vistorias e documentos são sincronizados em listas; fotos pendentes são persistidas no sistema de arquivos até o envio ser confirmado.
-5. **A autorização é decidida no servidor.** O aplicativo armazena e encaminha o token de acesso; as rotas do Expo e a API de domínio devem validar a operação solicitada.
+5. **A autorização é decidida no servidor.** O aplicativo armazena e encaminha o token de acesso; a API de domínio valida a operação solicitada.
 
 ## Arquitetura atual
 
@@ -17,12 +17,11 @@ flowchart TB
     UI --> Store[Zustand + AsyncStorage\nvistoria selecionada e token]
     UI --> DB[(WatermelonDB / SQLite\nvistorias, documentos e fila)]
     UI --> Files[Sistema de arquivos\nfotos pendentes e cache de documentos]
-    UI --> BFF[Rotas Expo Router\nsrc/app/api/*.api.ts]
-    BFF -->|APIS_URL + Bearer| API[API de domínio externa]
+    UI -->|EXPO_PUBLIC_API_URL + Bearer| API[API Nest]
     API -. dependência externa .-> Persistence[(Dados e arquivos remotos)]
 
     classDef current fill:#EAF3FF,stroke:#1E5BA8,color:#11181C;
-    class App,Router,UI,Store,DB,Files,BFF current;
+    class App,Router,UI,Store,DB,Files current;
 ```
 
 ### Camadas e responsabilidades atuais
@@ -34,7 +33,7 @@ flowchart TB
 | Conectividade e sincronização | `src/providers/`, `src/services/` e `src/hooks/` | Detecta rede, envia pendências e atualiza o banco local. | Não há retentativa com política de espera, telemetria de fila nem resolução explícita de conflitos. |
 | Persistência local | `src/db/` | Define o esquema WatermelonDB, migrações, modelos e operações atômicas locais. | O esquema não registra versão remota, cursor de sincronização ou estado detalhado por operação. |
 | Arquivos locais | `expo-file-system` | Copia fotos pendentes para `Paths.document` e cria arquivos temporários para abrir documentos. | Documentos não são catalogados nem validados para uso offline; o cache é transitório. |
-| BFF leve | `src/app/api/` | Encaminha autenticação, vistorias, documentos e conclusão à API definida em `APIS_URL`. | Depende de servidor Expo implantado para funcionar em builds nativos de produção. |
+| Integração HTTP | Telas e `src/services/sincronizacao-offline.ts` | Chama a API Nest com a URL definida em `EXPO_PUBLIC_API_URL` e encaminha o token Bearer nas rotas protegidas. | A origem precisa ser alcançável pelo dispositivo e não pode conter segredos. |
 | Domínio e persistência remota | Fora do repositório | Autenticação, regras de negócio, autorização, dados e armazenamento remoto. | O contrato é uma dependência de integração, não código auditável neste projeto. |
 
 ### Organização do código
@@ -43,7 +42,6 @@ flowchart TB
 src/
 ├── app/
 │   ├── (aplicacao)/            # Rotas autenticadas: home, vistorias e documentos
-│   ├── api/                    # Adaptadores HTTP para a API de domínio externa
 │   ├── _layout.tsx             # Provedor visual e stack raiz
 │   └── index.tsx               # Tela de login
 ├── components/
@@ -61,17 +59,17 @@ src/
 │   └── sincronizacao.ts        # Operações locais e fila de conclusões
 ├── hooks/                      # Localização e horário global
 ├── providers/                  # Contexto de conexão e sincronização automática
-├── services/                   # Multipart e integração offline-first
+├── services/                   # URL da API, multipart e integração offline-first
 └── stores/                     # Estado persistido da vistoria selecionada
 ```
 
 ## Fluxos presentes
 
-- **Autenticação:** `FormularioLogin` chama `/api/auth/login`. O token devolvido pela API de domínio é armazenado como `accessToken` no `AsyncStorage`; na próxima abertura, sua presença direciona o usuário para `/home`.
-- **Atualização local:** ao entrar em estado online, `ProvedorConexao` executa `sincronizarDadosComApi`. A rotina busca vistorias e documentos, e atualiza as tabelas locais em transações WatermelonDB.
-- **Seleção e conclusão de vistoria:** a tela de vistorias observa registros pendentes no banco, e a seleção é mantida com Zustand. A tela inicial captura uma foto e obtém a localização atual antes de concluir a vistoria.
-- **Conclusão online:** a foto, as coordenadas e o identificador são enviados como `multipart/form-data` para a rota Expo; após confirmação, o registro local é atualizado como concluído.
-- **Conclusão offline:** a foto é copiada para `Paths.document/vistorias-pendentes`, um registro é criado em `conclusoes_pendentes` e a vistoria local é atualizada. Quando a rede retorna, as pendências são enviadas em ordem de criação e removidas somente após a confirmação da API.
+- **Autenticação:** `FormularioLogin` chama `POST /usuarios/login` diretamente. O token devolvido pela API é armazenado como `accessToken` no `AsyncStorage`; na próxima abertura, sua presença direciona o usuário para `/home`.
+- **Atualização local:** ao entrar em estado online, `ProvedorConexao` executa `sincronizarDadosComApi`. Além disso, ao receber foco com conexão ativa, Vistorias consulta `GET /vistorias` e Documentos consulta `GET /documentos`; cada resposta atualiza somente a tabela local correspondente.
+- **Seleção e conclusão de vistoria:** a tela de vistorias observa registros pendentes no banco, e a seleção é mantida com Zustand. No clique de confirmação, a tela captura `completedAt` antes de obter a localização.
+- **Conclusão online:** a foto, as coordenadas, o identificador, `completedAt` e `pendente=false` são enviados como `multipart/form-data` diretamente para `PUT /vistorias/:id`; a resposta da API é aplicada como cópia local canônica.
+- **Conclusão offline:** a foto é copiada para `Paths.document/vistorias-pendentes`, um registro com a mesma `completedAt` é criado em `conclusoes_pendentes` e a vistoria local é atualizada. Quando a rede retorna, as pendências são enviadas em ordem de conclusão. Em `409 INSPECTION_COMPLETION_CONFLICT`, a pendência e a foto perdedoras são removidas, as demais continuam e a lista remota atualiza os dados vencedores.
 - **Documentos:** a sincronização traz metadados para a tabela `documentos`. Ao abrir um item, o arquivo é obtido pela rota autenticada, salvo no cache e entregue ao visualizador nativo ou ao compartilhamento do sistema.
 
 ## Modelo de dados local
@@ -96,6 +94,7 @@ erDiagram
       number latitude
       number longitude
       boolean pendente
+      number completed_at
       number created_at
       number updated_at
     }
@@ -108,6 +107,7 @@ erDiagram
       string foto_mime_type
       string foto_nome
       number criada_em
+      number concluido_em
     }
 ```
 
@@ -121,24 +121,22 @@ O vínculo entre `conclusoes_pendentes.vistoria_id` e a vistoria é lógico; o W
 sequenceDiagram
     participant App as Aplicativo
     participant Local as SQLite e arquivos locais
-    participant BFF as Rotas Expo Router
     participant API as API de domínio
 
     App->>Local: Copia foto e cria conclusão pendente em transação
     Note over App,Local: A conclusão pode ser salva sem rede
-    App->>BFF: PUT /api/vistorias/concluirVistoria com multipart
-    BFF->>API: Encaminha foto, localização e Bearer
+    App->>API: PUT /vistorias/:id com multipart e Bearer
     alt confirmação recebida
-        API-->>BFF: Sucesso
-        BFF-->>App: Sucesso
+        API-->>App: Sucesso
         App->>Local: Remove pendência e tenta excluir a foto
+    else conflito 409
+        API-->>App: INSPECTION_COMPLETION_CONFLICT + vencedor
+        App->>Local: Remove pendência e foto perdedoras
     else falha ou sem rede
-        API-->>BFF: Erro ou indisponibilidade
-        BFF-->>App: Erro
+        API-->>App: Erro ou indisponibilidade
         Note over App,Local: A pendência e a foto são preservadas
     end
-    App->>BFF: GET vistorias e documentos
-    BFF->>API: Encaminha Bearer
+    App->>API: GET vistorias e documentos com Bearer
     API-->>App: Listas remotas
     App->>Local: Atualiza cópia local em transação
 ```
@@ -149,10 +147,10 @@ sequenceDiagram
 | --- | --- |
 | Persistência antes do envio | Implementada para conclusões offline, com foto em diretório de documentos e registro na fila. |
 | Evitar execuções concorrentes | Implementada no `ProvedorConexao` com uma referência em memória. |
-| Ordenação | As conclusões pendentes são processadas por `criada_em`, em ordem crescente. |
+| Ordenação | As conclusões pendentes são processadas por `concluido_em`, em ordem crescente. |
 | Reenvio após falha | A pendência é preservada quando a chamada falha antes da confirmação. |
 | Idempotência | Depende da API externa; a fila atual não envia `operationId` nem possui confirmação persistida por operação. |
-| Conflitos | Não há versionamento local/remoto nem interface de resolução de conflito. |
+| Conflitos | A API escolhe a menor `completedAt`; a pendência perdedora é descartada e o provedor exibe o aviso. |
 | Download offline de documentos | Não está implementado como recurso persistente; o arquivo é baixado quando o usuário tenta abri-lo. |
 
 ## Arquitetura de referência para a evolução
@@ -197,7 +195,7 @@ Fotos e documentos devem continuar em endpoints de arquivo dedicados. A API deve
 ## Segurança, privacidade e operação
 
 - Mover o token de `AsyncStorage` para armazenamento seguro do sistema, como `expo-secure-store`, e prever expiração e renovação controladas.
-- Implantar o servidor das API Routes do Expo e configurar a origem do `expo-router` para os builds nativos; sem isso, os `fetch` relativos não têm uma origem de produção garantida.
+- Configurar `EXPO_PUBLIC_API_URL` com uma origem HTTPS pública da API Nest nos builds de produção; a variável fica visível no bundle e não pode conter segredos.
 - Validar autorização, tipo MIME, tamanho e conteúdo dos arquivos na API de domínio. A validação no aplicativo não é barreira de segurança.
 - Tratar fotos e localização como dados pessoais: aplicar acesso mínimo, retenção definida, auditoria e exclusão conforme a política aplicável.
 - Registrar métricas de conectividade, tamanho e idade da fila, falhas de upload, tentativas e tempo de sincronização.
@@ -216,7 +214,7 @@ Fotos e documentos devem continuar em endpoints de arquivo dedicados. A API deve
 
 ## Melhorias priorizadas
 
-1. Implantar e configurar o servidor das API Routes para produção nativa, com origem segura do Expo Router.
+1. Publicar a API Nest em HTTPS e configurar essa URL pública em `EXPO_PUBLIC_API_URL` para builds de produção.
 2. Armazenar credenciais em armazenamento seguro e proteger as rotas autenticadas antes da renderização.
 3. Acrescentar `operationId`, versão remota e cursor de sincronização ao banco local e ao contrato da API.
 4. Implementar retentativas com espera progressiva, estados persistentes de erro e tratamento de conflitos.

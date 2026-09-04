@@ -13,12 +13,25 @@ import type { DocumentoApi, VistoriaApi } from "@/db/types";
 import { criarCorpoMultipart } from "./criar-corpo-multipart";
 
 export interface IDadosConclusaoVistoria {
+  completedAt: string;
   fotoMimeType: string;
   fotoNome: string;
   fotoUri: string;
   id: string;
   latitude: number;
   longitude: number;
+}
+
+export class ConflitoConclusaoVistoriaError extends Error {
+  readonly vistoria: VistoriaApi;
+
+  constructor(vistoria: VistoriaApi) {
+    super(
+      "Esta vistoria já foi concluída por uma marcação anterior. Os dados vencedores foram atualizados.",
+    );
+    this.name = "ConflitoConclusaoVistoriaError";
+    this.vistoria = vistoria;
+  }
 }
 
 /**
@@ -54,27 +67,15 @@ function obterNomePersistenteArquivo({
 }
 
 /**
- * Extrai a mensagem de erro retornada pela API ou usa um texto padrão.
- * @param response - Resposta recebida da requisição com falha.
- * @param mensagemPadrao - Mensagem usada quando a API não detalhar o erro.
- * @returns Retorna a mensagem que deve ser exibida ao usuário.
- */
-async function obterMensagemDeErro(response: Response, mensagemPadrao: string) {
-  const respostaErro = (await response.json().catch(() => null)) as {
-    error?: string;
-  } | null;
-
-  return respostaErro?.error ?? mensagemPadrao;
-}
-
-/**
  * Busca as vistorias disponíveis para o usuário autenticado.
  * @param token - Token de acesso usado na autorização da requisição.
  * @returns Retorna a lista de vistorias recebida da API.
  * @throws Retorna erro quando a API não puder recuperar as vistorias.
  */
 async function buscarVistorias(token: string) {
-  const response = await fetch("/api/vistorias/verVistorias", {
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL + "/vistorias";
+
+  const response = await fetch(apiUrl, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -95,7 +96,9 @@ async function buscarVistorias(token: string) {
  * @throws Retorna erro quando a API não puder recuperar os documentos.
  */
 async function buscarDocumentos(token: string) {
-  const response = await fetch("/api/documentos/recuperarDocumentos", {
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL + "/documentos";
+
+  const response = await fetch(apiUrl, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -128,13 +131,18 @@ export async function enviarConclusaoVistoria(
       uri: dadosConclusao.fotoUri,
     },
     campos: {
+      completedAt: dadosConclusao.completedAt,
       id: dadosConclusao.id,
       latitude: String(dadosConclusao.latitude),
       longitude: String(dadosConclusao.longitude),
+      pendente: "false",
     },
   });
 
-  const response = await fetch("/api/vistorias/concluirVistoria", {
+  const apiUrl =
+    process.env.EXPO_PUBLIC_API_URL + "/vistorias/" + dadosConclusao.id;
+
+  const response = await fetch(apiUrl, {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -143,14 +151,80 @@ export async function enviarConclusaoVistoria(
     body: dadosMultipart.body,
   });
 
+  const resposta = (await response.json().catch(() => null)) as {
+    code?: string;
+    error?: string;
+    message?: string;
+    vistoria?: VistoriaApi;
+  } | null;
+
+  if (
+    response.status === 409 &&
+    resposta?.code === "INSPECTION_COMPLETION_CONFLICT" &&
+    resposta.vistoria
+  ) {
+    throw new ConflitoConclusaoVistoriaError(resposta.vistoria);
+  }
+
   if (!response.ok) {
     throw new Error(
-      await obterMensagemDeErro(
-        response,
+      resposta?.error ??
+        resposta?.message ??
         "Não foi possível concluir a vistoria.",
-      ),
     );
   }
+
+  return resposta as VistoriaApi;
+}
+
+/**
+ * Atualiza as vistorias locais com os dados recebidos da API.
+ * @param token - Token de acesso usado na autorização da requisição.
+ * @returns Conclui após aplicar as vistorias recebidas no banco local.
+ */
+async function sincronizarVistoriasDaApi(token: string) {
+  const vistoriasApi = await buscarVistorias(token);
+
+  await sincronizarVistorias(vistoriasApi);
+}
+
+/**
+ * Atualiza os documentos locais com os dados recebidos da API.
+ * @param token - Token de acesso usado na autorização da requisição.
+ * @returns Conclui após aplicar os documentos recebidos no banco local.
+ */
+async function sincronizarDocumentosDaApi(token: string) {
+  const documentosApi = await buscarDocumentos(token);
+
+  await sincronizarDocumentos(documentosApi);
+}
+
+/**
+ * Atualiza as vistorias locais quando houver uma sessão autenticada.
+ * @returns Conclui sem consultar a API quando não houver token de acesso.
+ */
+export async function sincronizarVistoriasComApi() {
+  const token = await AsyncStorage.getItem("accessToken");
+
+  if (!token) {
+    return;
+  }
+
+  await sincronizarVistoriasDaApi(token);
+}
+
+/**
+ * Atualiza os documentos locais quando houver uma sessão autenticada.
+ * @returns Conclui sem consultar a API quando não houver token de acesso.
+ */
+export async function sincronizarDocumentosComApi() {
+  const token = await AsyncStorage.getItem("accessToken");
+
+  if (!token) {
+    return;
+  }
+
+  await sincronizarDocumentosDaApi(token);
 }
 
 /**
@@ -165,7 +239,9 @@ export async function enfileirarConclusaoVistoria(
   const arquivoDeOrigem = new File(dadosConclusao.fotoUri);
 
   if (!arquivoDeOrigem.exists) {
-    throw new Error("A foto da vistoria não está mais disponível para sincronização.");
+    throw new Error(
+      "A foto da vistoria não está mais disponível para sincronização.",
+    );
   }
 
   const diretorioDePendencias = new Directory(
@@ -206,6 +282,7 @@ export async function enfileirarConclusaoVistoria(
  * @throws Retorna erro quando a sessão, os arquivos locais ou a API falharem.
  */
 export async function sincronizarDadosComApi() {
+  const conflitos: string[] = [];
   const conclusoesPendentes = await listarConclusoesPendentes();
   const token = await AsyncStorage.getItem("accessToken");
 
@@ -216,7 +293,7 @@ export async function sincronizarDadosComApi() {
       );
     }
 
-    return;
+    return { conflitos };
   }
 
   for (const conclusaoPendente of conclusoesPendentes) {
@@ -228,17 +305,28 @@ export async function sincronizarDadosComApi() {
       );
     }
 
-    await enviarConclusaoVistoria(
-      {
-        fotoMimeType: conclusaoPendente.fotoMimeType,
-        fotoNome: conclusaoPendente.fotoNome,
-        fotoUri: conclusaoPendente.fotoUri,
-        id: conclusaoPendente.vistoriaId,
-        latitude: conclusaoPendente.latitude,
-        longitude: conclusaoPendente.longitude,
-      },
-      token,
-    );
+    try {
+      await enviarConclusaoVistoria(
+        {
+          completedAt: (
+            conclusaoPendente.completedAt ?? conclusaoPendente.criadaEm
+          ).toISOString(),
+          fotoMimeType: conclusaoPendente.fotoMimeType,
+          fotoNome: conclusaoPendente.fotoNome,
+          fotoUri: conclusaoPendente.fotoUri,
+          id: conclusaoPendente.vistoriaId,
+          latitude: conclusaoPendente.latitude,
+          longitude: conclusaoPendente.longitude,
+        },
+        token,
+      );
+    } catch (error) {
+      if (!(error instanceof ConflitoConclusaoVistoriaError)) {
+        throw error;
+      }
+
+      conflitos.push(conclusaoPendente.vistoriaId);
+    }
 
     await removerConclusaoPendente(conclusaoPendente.id);
 
@@ -252,13 +340,10 @@ export async function sincronizarDadosComApi() {
     }
   }
 
-  const [vistoriasApi, documentosApi] = await Promise.all([
-    buscarVistorias(token),
-    buscarDocumentos(token),
+  await Promise.all([
+    sincronizarVistoriasDaApi(token),
+    sincronizarDocumentosDaApi(token),
   ]);
 
-  await Promise.all([
-    sincronizarVistorias(vistoriasApi),
-    sincronizarDocumentos(documentosApi),
-  ]);
+  return { conflitos };
 }
