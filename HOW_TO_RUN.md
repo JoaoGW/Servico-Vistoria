@@ -122,7 +122,7 @@ Abra .env e preencha todas as variáveis obrigatórias. Um exemplo local é:
 POSTGRES_DB=vistoria
 POSTGRES_USER=vistoria
 POSTGRES_PASSWORD=troque-por-uma-senha-local-forte
-DATABASE_URL=postgresql://vistoria:troque-por-uma-senha-local-forte@postgres:5432/vistoria
+DATABASE_URL=postgresql://vistoria:sua-senha-forte@postgres:5432/vistoria
 JWT_SECRET=cole-um-segredo-aleatorio-com-pelo-menos-32-caracteres
 
 API_PORT=3001
