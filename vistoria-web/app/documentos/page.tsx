@@ -32,6 +32,8 @@ export default function DocumentosPage() {
   const [sidebarRecolhida, setSidebarRecolhida] = useState<boolean>(false)
   const [carregando, setCarregando] = useState<boolean>(true)
   const [mensagemErro, setMensagemErro] = useState<string>('')
+  const [mensagemAcao, setMensagemAcao] = useState<string>('')
+  const [documentoEmExclusao, setDocumentoEmExclusao] = useState<string>('')
 
   useEffect(() => {
     const token = sessionStorage.getItem('accessToken')
@@ -44,6 +46,37 @@ export default function DocumentosPage() {
       .catch((error: unknown) => setMensagemErro(error instanceof Error ? error.message : 'Não foi possível recuperar os documentos.'))
       .finally(() => setCarregando(false))
   }, [])
+
+  const excluirDocumento = async (id: string) => {
+    const token = sessionStorage.getItem('accessToken')
+
+    if (!token) {
+      setMensagemAcao('Sua sessão não foi encontrada. Entre novamente para excluir o documento.')
+      return
+    }
+
+    setDocumentoEmExclusao(id)
+    setMensagemAcao('')
+
+    try {
+      const response = await fetch(`/api/documentos/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Não foi possível excluir o documento.')
+      }
+
+      setDocumentos((itens) => itens.filter((documento) => documento.id !== id))
+    } catch (error) {
+      setMensagemAcao(error instanceof Error ? error.message : 'Não foi possível excluir o documento.')
+    } finally {
+      setDocumentoEmExclusao('')
+    }
+  }
 
   return (
     <div
@@ -92,7 +125,16 @@ export default function DocumentosPage() {
               </section>
             ) : null}
 
-            {!carregando && !mensagemErro && documentos.length ? <DocumentosTable documentos={documentos} /> : null}
+            {mensagemAcao ? (
+              <section className="mt-6 rounded-xl border border-[#F5B7B7] bg-[#FFF5F5] px-6 py-5 text-[#7C252D]" role="alert">
+                <p className="font-semibold">Não foi possível excluir o documento</p>
+                <p className="mt-1 text-sm leading-6">{mensagemAcao}</p>
+              </section>
+            ) : null}
+
+            {!carregando && !mensagemErro && documentos.length ? (
+              <DocumentosTable documentoEmExclusao={documentoEmExclusao} documentos={documentos} onDelete={excluirDocumento} />
+            ) : null}
 
             {!carregando && !mensagemErro && !documentos.length ? (
               <section className="mt-10 rounded-xl border border-[#DDE3ED] bg-white px-5 py-12 shadow-[0_8px_24px_rgba(30,39,74,0.06)] sm:px-6">
