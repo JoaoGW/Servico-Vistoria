@@ -11,4 +11,5 @@ export class ConclusaoPendenteModel extends Model {
   @field("foto_mime_type") fotoMimeType: string;
   @field("foto_nome") fotoNome: string;
   @date("criada_em") criadaEm: Date;
+  @date("concluido_em") completedAt: Date | null;
 }

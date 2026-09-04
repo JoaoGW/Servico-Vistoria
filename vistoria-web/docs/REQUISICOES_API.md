@@ -61,10 +61,20 @@ interface Vistoria {
   latitude: number | null
   longitude: number | null
   pendente: boolean
+  completedAt: string | null
   createdAt: string
   updatedAt: string
 }
 ```
+
+Para uma conclusão, a API retorna `completedAt`. A tela de detalhes usa esse
+campo como **Finalizado em**; `updatedAt` não determina a precedência da
+conclusão.
+
+`PUT /vistorias/:id` exige `completedAt` ISO-8601 junto a `pendente: false`.
+Uma vistoria concluída é terminal. Se a marcação recebida tiver horário igual
+ou posterior ao já persistido, a API responde `409` com o código
+`INSPECTION_COMPLETION_CONFLICT` e a vistoria vencedora.
 
 As listagens devolvem o tipo MIME da foto, mas não o binário. A foto de uma
 vistoria concluída é obtida de forma autenticada em

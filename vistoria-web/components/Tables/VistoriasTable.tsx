@@ -10,6 +10,7 @@ export interface Vistoria {
   latitude: number | null
   longitude: number | null
   pendente: boolean
+  completedAt: string | null
   createdAt: string
   updatedAt: string
 }

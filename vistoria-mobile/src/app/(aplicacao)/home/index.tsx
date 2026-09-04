@@ -23,11 +23,12 @@ import { useRelogioGlobal } from "@/hooks/use-relogio-global";
 import { useConexao } from "@/providers/ConexaoProvider";
 import { useVistoriaStore } from "@/stores/use-vistoria-store";
 
-import { concluirVistoriaLocal } from "@/db/sincronizacao";
+import { aplicarVistoriaDaApi } from "@/db/sincronizacao";
 
 import {
   enfileirarConclusaoVistoria,
   enviarConclusaoVistoria,
+  ConflitoConclusaoVistoriaError,
 } from "@/services/sincronizacao-offline";
 
 function abreviarDescricao(descricao: string) {
@@ -94,11 +95,13 @@ export default function PaginaInicial() {
     setEstaConcluindo(true);
 
     try {
+      const completedAt = new Date().toISOString();
       const localizacao = await obterCoordenadasAtuais();
       const mimeType = fotoParaConfirmar.mimeType ?? "image/jpeg";
       const nomeArquivo =
         fotoParaConfirmar.fileName ?? `vistoria-${vistoriaAtiva.id}.jpg`;
       const dadosConclusao = {
+        completedAt,
         fotoMimeType: mimeType,
         fotoNome: nomeArquivo,
         fotoUri: fotoParaConfirmar.uri,
@@ -116,13 +119,11 @@ export default function PaginaInicial() {
           );
         }
 
-        await enviarConclusaoVistoria(dadosConclusao, token);
-        await concluirVistoriaLocal({
-          id: vistoriaAtiva.id,
-          latitude: localizacao.latitude,
-          longitude: localizacao.longitude,
-          photoMimeType: mimeType,
-        });
+        const vistoriaConcluida = await enviarConclusaoVistoria(
+          dadosConclusao,
+          token,
+        );
+        await aplicarVistoriaDaApi(vistoriaConcluida);
         Alert.alert(
           "Vistoria concluída",
           "A foto e a localização foram enviadas.",
@@ -139,6 +140,13 @@ export default function PaginaInicial() {
       setFotoParaConfirmar(null);
     } catch (error) {
       console.error("Não foi possível concluir a vistoria.", error);
+      if (error instanceof ConflitoConclusaoVistoriaError) {
+        await aplicarVistoriaDaApi(error.vistoria);
+        limparVistoriaAtiva();
+        setFotoParaConfirmar(null);
+        Alert.alert("Vistoria já concluída", error.message);
+        return;
+      }
       Alert.alert(
         "Não foi possível concluir a vistoria",
         error instanceof Error

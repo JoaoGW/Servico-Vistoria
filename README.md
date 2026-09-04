@@ -37,9 +37,11 @@ conexão, e encaminha chamadas por API Routes do Expo Router.
 2. O aplicativo mobile sincroniza as vistorias pendentes para o banco local.
 3. Em campo, o técnico seleciona a vistoria, captura uma foto e registra a
    localização atual.
-4. A conclusão envia `pendente: false`, latitude, longitude e a foto no campo
-   `photo`; sem rede, os dados e o binário permanecem na fila local até a
-   sincronização.
+4. No clique de confirmação, o aplicativo captura `completedAt` e envia
+   `pendente: false`, a data, latitude, longitude e a foto no campo `photo`;
+   sem rede, os dados e o binário permanecem na fila local até a sincronização.
+   A menor `completedAt` vence mesmo que chegue posteriormente. A conclusão é
+   terminal: uma vistoria não volta a pendente.
 5. No portal, somente vistorias concluídas podem ser abertas em detalhes, com
    dados registrados, foto autenticada e mapa Leaflet/OpenStreetMap.
 6. Vistorias e documentos podem ser excluídos pelo portal após resposta
@@ -229,7 +231,7 @@ As coleções de requisições para Postman estão em
 | `GET` | `/usuarios` | JWT | Lista usuários |
 | `GET` | `/vistorias` | JWT | Lista vistorias |
 | `POST` | `/vistorias` | JWT | Cria vistoria pendente com `userId` e `description` |
-| `PUT` | `/vistorias/:id` | JWT | Atualiza status e registra coordenadas e foto no campo `photo` |
+| `PUT` | `/vistorias/:id` | JWT | Conclui vistoria com foto, coordenadas e `completedAt` ISO-8601 |
 | `GET` | `/vistorias/:id/foto` | JWT | Exibe a imagem de uma vistoria |
 | `DELETE` | `/vistorias/:id` | JWT | Remove uma vistoria |
 | `GET` | `/documentos` | JWT | Lista documentos |
@@ -239,10 +241,13 @@ As coleções de requisições para Postman estão em
 | `DELETE` | `/documentos/:id` | JWT | Remove um documento |
 
 O cadastro de vistoria usa JSON; sua conclusão usa `multipart/form-data` e
-aceita latitude, longitude, `pendente` e uma imagem no campo `photo`. Latitude
-e longitude devem ser enviadas juntas, e a imagem tem limite de 10 MB. A
-listagem devolve os metadados, inclusive `photoMimeType`, mas não o binário da
-foto; ele é recuperado por `GET /vistorias/:id/foto`.
+exige `pendente: false`, `completedAt` em ISO-8601, latitude, longitude e uma
+imagem no campo `photo`. Latitude e longitude devem ser enviadas juntas, e a
+imagem tem limite de 10 MB. A API persiste `completedAt` em `concluido_em` e o
+retorna em todas as leituras. Em conflito, devolve `409` com o código
+`INSPECTION_COMPLETION_CONFLICT` e os dados vencedores. A listagem devolve os
+metadados, inclusive `photoMimeType`, mas não o binário da foto; ele é
+recuperado por `GET /vistorias/:id/foto`.
 
 Documentos devem ser PDF ou DOCX, enviados no campo `file`, com limite de
 10 MB. A atualização usa `PUT /documentos` com o identificador no corpo
@@ -307,7 +312,7 @@ Para gerar builds locais ou em nuvem, consulte os scripts `build:android:*` e
 
 - `usuarios`: endereço de e-mail, hash de senha e datas de auditoria;
 - `vistorias`: usuário responsável, descrição, coordenadas, status pendente,
-  tipo MIME e imagem da vistoria;
+  `concluido_em`, tipo MIME e imagem da vistoria;
 - `documentos`: título, nome, tipo MIME e conteúdo binário de arquivos PDF ou
   DOCX.
 

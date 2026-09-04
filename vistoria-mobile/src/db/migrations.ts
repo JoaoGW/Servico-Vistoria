@@ -23,5 +23,24 @@ export const migrations = schemaMigrations({
         },
       ],
     },
+    {
+      toVersion: 3,
+      steps: [
+        {
+          type: "add_columns",
+          table: "vistorias",
+          columns: [
+            { name: "completed_at", type: "number", isOptional: true },
+          ],
+        },
+        {
+          type: "add_columns",
+          table: "conclusoes_pendentes",
+          columns: [
+            { name: "concluido_em", type: "number", isOptional: true },
+          ],
+        },
+      ],
+    },
   ],
 });

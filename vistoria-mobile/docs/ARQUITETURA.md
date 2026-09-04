@@ -69,9 +69,9 @@ src/
 
 - **Autenticação:** `FormularioLogin` chama `/api/auth/login`. O token devolvido pela API de domínio é armazenado como `accessToken` no `AsyncStorage`; na próxima abertura, sua presença direciona o usuário para `/home`.
 - **Atualização local:** ao entrar em estado online, `ProvedorConexao` executa `sincronizarDadosComApi`. A rotina busca vistorias e documentos, e atualiza as tabelas locais em transações WatermelonDB.
-- **Seleção e conclusão de vistoria:** a tela de vistorias observa registros pendentes no banco, e a seleção é mantida com Zustand. A tela inicial captura uma foto e obtém a localização atual antes de concluir a vistoria.
-- **Conclusão online:** a foto, as coordenadas e o identificador são enviados como `multipart/form-data` para a rota Expo; após confirmação, o registro local é atualizado como concluído.
-- **Conclusão offline:** a foto é copiada para `Paths.document/vistorias-pendentes`, um registro é criado em `conclusoes_pendentes` e a vistoria local é atualizada. Quando a rede retorna, as pendências são enviadas em ordem de criação e removidas somente após a confirmação da API.
+- **Seleção e conclusão de vistoria:** a tela de vistorias observa registros pendentes no banco, e a seleção é mantida com Zustand. No clique de confirmação, a tela captura `completedAt` antes de obter a localização.
+- **Conclusão online:** a foto, as coordenadas, o identificador e `completedAt` são enviados como `multipart/form-data` para a rota Expo; a resposta da API é aplicada como cópia local canônica.
+- **Conclusão offline:** a foto é copiada para `Paths.document/vistorias-pendentes`, um registro com a mesma `completedAt` é criado em `conclusoes_pendentes` e a vistoria local é atualizada. Quando a rede retorna, as pendências são enviadas em ordem de conclusão. Em `409 INSPECTION_COMPLETION_CONFLICT`, a pendência e a foto perdedoras são removidas, as demais continuam e a lista remota atualiza os dados vencedores.
 - **Documentos:** a sincronização traz metadados para a tabela `documentos`. Ao abrir um item, o arquivo é obtido pela rota autenticada, salvo no cache e entregue ao visualizador nativo ou ao compartilhamento do sistema.
 
 ## Modelo de dados local
@@ -96,6 +96,7 @@ erDiagram
       number latitude
       number longitude
       boolean pendente
+      number completed_at
       number created_at
       number updated_at
     }
@@ -108,6 +109,7 @@ erDiagram
       string foto_mime_type
       string foto_nome
       number criada_em
+      number concluido_em
     }
 ```
 
@@ -127,11 +129,15 @@ sequenceDiagram
     App->>Local: Copia foto e cria conclusão pendente em transação
     Note over App,Local: A conclusão pode ser salva sem rede
     App->>BFF: PUT /api/vistorias/concluirVistoria com multipart
-    BFF->>API: Encaminha foto, localização e Bearer
+    BFF->>API: Encaminha foto, localização, completedAt e Bearer
     alt confirmação recebida
         API-->>BFF: Sucesso
         BFF-->>App: Sucesso
         App->>Local: Remove pendência e tenta excluir a foto
+    else conflito 409
+        API-->>BFF: INSPECTION_COMPLETION_CONFLICT + vencedor
+        BFF-->>App: Conflito
+        App->>Local: Remove pendência e foto perdedoras
     else falha ou sem rede
         API-->>BFF: Erro ou indisponibilidade
         BFF-->>App: Erro
@@ -149,10 +155,10 @@ sequenceDiagram
 | --- | --- |
 | Persistência antes do envio | Implementada para conclusões offline, com foto em diretório de documentos e registro na fila. |
 | Evitar execuções concorrentes | Implementada no `ProvedorConexao` com uma referência em memória. |
-| Ordenação | As conclusões pendentes são processadas por `criada_em`, em ordem crescente. |
+| Ordenação | As conclusões pendentes são processadas por `concluido_em`, em ordem crescente. |
 | Reenvio após falha | A pendência é preservada quando a chamada falha antes da confirmação. |
 | Idempotência | Depende da API externa; a fila atual não envia `operationId` nem possui confirmação persistida por operação. |
-| Conflitos | Não há versionamento local/remoto nem interface de resolução de conflito. |
+| Conflitos | A API escolhe a menor `completedAt`; a pendência perdedora é descartada e o provedor exibe o aviso. |
 | Download offline de documentos | Não está implementado como recurso persistente; o arquivo é baixado quando o usuário tenta abri-lo. |
 
 ## Arquitetura de referência para a evolução

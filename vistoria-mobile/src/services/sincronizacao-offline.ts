@@ -13,12 +13,25 @@ import type { DocumentoApi, VistoriaApi } from "@/db/types";
 import { criarCorpoMultipart } from "./criar-corpo-multipart";
 
 export interface IDadosConclusaoVistoria {
+  completedAt: string;
   fotoMimeType: string;
   fotoNome: string;
   fotoUri: string;
   id: string;
   latitude: number;
   longitude: number;
+}
+
+export class ConflitoConclusaoVistoriaError extends Error {
+  readonly vistoria: VistoriaApi;
+
+  constructor(vistoria: VistoriaApi) {
+    super(
+      "Esta vistoria já foi concluída por uma marcação anterior. Os dados vencedores foram atualizados.",
+    );
+    this.name = "ConflitoConclusaoVistoriaError";
+    this.vistoria = vistoria;
+  }
 }
 
 /**
@@ -51,20 +64,6 @@ function obterNomePersistenteArquivo({
   const identificador = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
   return `${idSeguro}-${identificador}${obterExtensaoArquivo(fotoNome, fotoMimeType)}`;
-}
-
-/**
- * Extrai a mensagem de erro retornada pela API ou usa um texto padrão.
- * @param response - Resposta recebida da requisição com falha.
- * @param mensagemPadrao - Mensagem usada quando a API não detalhar o erro.
- * @returns Retorna a mensagem que deve ser exibida ao usuário.
- */
-async function obterMensagemDeErro(response: Response, mensagemPadrao: string) {
-  const respostaErro = (await response.json().catch(() => null)) as {
-    error?: string;
-  } | null;
-
-  return respostaErro?.error ?? mensagemPadrao;
 }
 
 /**
@@ -128,6 +127,7 @@ export async function enviarConclusaoVistoria(
       uri: dadosConclusao.fotoUri,
     },
     campos: {
+      completedAt: dadosConclusao.completedAt,
       id: dadosConclusao.id,
       latitude: String(dadosConclusao.latitude),
       longitude: String(dadosConclusao.longitude),
@@ -143,14 +143,25 @@ export async function enviarConclusaoVistoria(
     body: dadosMultipart.body,
   });
 
-  if (!response.ok) {
-    throw new Error(
-      await obterMensagemDeErro(
-        response,
-        "Não foi possível concluir a vistoria.",
-      ),
-    );
+  const resposta = (await response.json().catch(() => null)) as {
+    code?: string;
+    error?: string;
+    vistoria?: VistoriaApi;
+  } | null;
+
+  if (
+    response.status === 409 &&
+    resposta?.code === "INSPECTION_COMPLETION_CONFLICT" &&
+    resposta.vistoria
+  ) {
+    throw new ConflitoConclusaoVistoriaError(resposta.vistoria);
   }
+
+  if (!response.ok) {
+    throw new Error(resposta?.error ?? "Não foi possível concluir a vistoria.");
+  }
+
+  return resposta as VistoriaApi;
 }
 
 /**
@@ -206,6 +217,7 @@ export async function enfileirarConclusaoVistoria(
  * @throws Retorna erro quando a sessão, os arquivos locais ou a API falharem.
  */
 export async function sincronizarDadosComApi() {
+  const conflitos: string[] = [];
   const conclusoesPendentes = await listarConclusoesPendentes();
   const token = await AsyncStorage.getItem("accessToken");
 
@@ -216,7 +228,7 @@ export async function sincronizarDadosComApi() {
       );
     }
 
-    return;
+    return { conflitos };
   }
 
   for (const conclusaoPendente of conclusoesPendentes) {
@@ -228,17 +240,28 @@ export async function sincronizarDadosComApi() {
       );
     }
 
-    await enviarConclusaoVistoria(
-      {
-        fotoMimeType: conclusaoPendente.fotoMimeType,
-        fotoNome: conclusaoPendente.fotoNome,
-        fotoUri: conclusaoPendente.fotoUri,
-        id: conclusaoPendente.vistoriaId,
-        latitude: conclusaoPendente.latitude,
-        longitude: conclusaoPendente.longitude,
-      },
-      token,
-    );
+    try {
+      await enviarConclusaoVistoria(
+        {
+          completedAt: (
+            conclusaoPendente.completedAt ?? conclusaoPendente.criadaEm
+          ).toISOString(),
+          fotoMimeType: conclusaoPendente.fotoMimeType,
+          fotoNome: conclusaoPendente.fotoNome,
+          fotoUri: conclusaoPendente.fotoUri,
+          id: conclusaoPendente.vistoriaId,
+          latitude: conclusaoPendente.latitude,
+          longitude: conclusaoPendente.longitude,
+        },
+        token,
+      );
+    } catch (error) {
+      if (!(error instanceof ConflitoConclusaoVistoriaError)) {
+        throw error;
+      }
+
+      conflitos.push(conclusaoPendente.vistoriaId);
+    }
 
     await removerConclusaoPendente(conclusaoPendente.id);
 
@@ -261,4 +284,6 @@ export async function sincronizarDadosComApi() {
     sincronizarVistorias(vistoriasApi),
     sincronizarDocumentos(documentosApi),
   ]);
+
+  return { conflitos };
 }

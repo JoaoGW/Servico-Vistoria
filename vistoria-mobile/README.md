@@ -2,7 +2,7 @@
 
 Aplicativo Android e iOS para consultar vistorias, registrar a conclusão com foto e localização e acessar documentos técnicos. A aplicação é construída com Expo e mantém uma cópia local dos dados para sustentar o fluxo de conclusão quando a conexão não estiver disponível.
 
-> Este repositório contém o cliente mobile em Expo/React Native, sua persistência SQLite local e as rotas de integração do Expo Router. A API de domínio, a persistência remota, o armazenamento de arquivos, o protocolo completo de conflitos e a infraestrutura de implantação não fazem parte do código versionado aqui. Essa separação deixa claros os limites da implementação atual.
+> Este repositório contém o cliente mobile em Expo/React Native, sua persistência SQLite local e as rotas de integração do Expo Router. A API de domínio e a persistência remota permanecem externas, mas este cliente implementa o contrato de conflito de conclusão definido pela API.
 
 ## Sumário
 
@@ -31,8 +31,8 @@ As leituras de vistorias e documentos vêm do WatermelonDB/SQLite local. As rota
 | Login e persistência de sessão | Parcial | Há formulário de login e token em `AsyncStorage`; ainda não há armazenamento seguro nem proteção de rotas antes da renderização. |
 | Consulta de vistorias | Disponível | A tela observa no banco local as vistorias marcadas como pendentes. |
 | Seleção de vistoria | Disponível | A vistoria ativa é persistida com Zustand e `AsyncStorage`. |
-| Captura e conclusão com foto/localização | Disponível | Solicita permissões, captura imagem, registra coordenadas e envia a conclusão por multipart quando online. |
-| Fila de conclusão offline | Parcial | Foto e metadados são persistidos localmente e reenviados ao recuperar a rede; não há identificador idempotente nem resolução de conflitos. |
+| Captura e conclusão com foto/localização | Disponível | Captura `completedAt` no clique, antes da localização, e envia a conclusão por multipart quando online. |
+| Fila de conclusão offline | Disponível | Foto, metadados e a mesma `completedAt` são persistidos e reenviados ao recuperar a rede; um `409` descarta a pendência perdedora e atualiza os dados vencedores. |
 | Sincronização de vistorias e documentos | Parcial | Atualiza listas locais ao entrar em estado online; não há cursor incremental, versões ou retentativa persistente. |
 | Abertura de documentos | Disponível online | Faz download sob demanda e abre pelo sistema operacional; não há catálogo de documentos disponível offline. |
 | Backend compartilhado e armazenamento remoto | Externos ao repositório | Dependem de uma API configurada em `APIS_URL`. |
@@ -52,7 +52,7 @@ flowchart LR
     A --> D[(Dados e arquivos\nfora deste repositório)]
 ```
 
-A sincronização atual envia primeiro as conclusões pendentes, remove a pendência somente após a resposta bem-sucedida e então atualiza as listas locais de vistorias e documentos. O detalhamento de responsabilidades, dados locais, limitações e evolução recomendada está em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
+A sincronização envia primeiro as conclusões pendentes. A API escolhe a menor `completedAt`; em um conflito `409 INSPECTION_COMPLETION_CONFLICT`, a pendência e a foto perdedoras são removidas, a sincronização continua e o aplicativo comunica o resultado. Depois, as listas locais de vistorias e documentos são atualizadas.
 
 ## Tecnologias
 
@@ -120,7 +120,7 @@ No estado atual, `tsc --noEmit` também percorre o material de referência em `D
 | --- | --- | --- |
 | `/api/auth/login` | `POST` | Encaminha autenticação para a API de domínio. |
 | `/api/vistorias/verVistorias` | `GET` | Recupera vistorias com o cabeçalho `Authorization`. |
-| `/api/vistorias/concluirVistoria` | `PUT` | Encaminha foto, coordenadas e conclusão no formato multipart. |
+| `/api/vistorias/concluirVistoria` | `PUT` | Encaminha foto, coordenadas, `completedAt` ISO-8601 e conclusão no formato multipart. |
 | `/api/documentos/recuperarDocumentos` | `GET` | Recupera os metadados dos documentos. |
 | `/api/documentos/:id/arquivo` | `GET` | Transfere o arquivo autenticado do documento. |
 
@@ -130,7 +130,8 @@ Os detalhes de implementação das API Routes estão em [docs/API_REQUESTS.md](d
 
 - **Expo Router para organizar interface e integração.** Rotas de tela e handlers `+api.ts` permanecem no mesmo módulo de aplicação, tornando explícita a separação entre código de cliente e código de servidor.
 - **WatermelonDB como cópia de trabalho local.** As listas não dependem de uma chamada remota por tela, e as operações locais de sincronização usam transações e lotes.
-- **Fila local para conclusões offline.** Antes de aguardar rede, a foto é copiada para armazenamento persistente e a pendência fica registrada no banco local.
+- **Precedência pela primeira marcação.** A data `completedAt` é capturada antes de obter a localização, persiste na fila e é comparada atomicamente pela API; a conclusão é terminal.
+- **Fila local para conclusões offline.** Antes de aguardar rede, a foto é copiada para armazenamento persistente e a pendência, incluindo `completedAt`, fica registrada no banco local.
 - **Sincronização centralizada pela conectividade.** O `ProvedorConexao` evita sincronizações concorrentes em memória e tenta atualizar os dados ao transicionar para online.
 - **Multipart binário construído no cliente.** A foto é enviada como `Uint8Array`, preservando o formato esperado pela rota de conclusão sem depender de `FormData` nativo para esse fluxo.
 - **Componentes por responsabilidade de interface.** Listas, modais, indicadores, navegação e primitivas visuais ficam em `src/components/`; telas coordenam estado e ações do fluxo.
@@ -142,7 +143,7 @@ O projeto implementa um fluxo funcional de campo, mas ainda não representa uma 
 - O `AsyncStorage` não é o armazenamento recomendado para tokens sensíveis. Use armazenamento seguro do sistema e implemente expiração, renovação e saída da sessão.
 - As telas autenticadas não validam uma sessão antes da renderização. A API de domínio deve continuar validando toda autorização por recurso.
 - As API Routes dependem de implantação de servidor e origem configurada para funcionar em builds nativos de produção; o `app.json` atual ainda não define essa origem.
-- A fila não possui `operationId`, versão remota, cursor ou resolução de conflito. Uma confirmação perdida após o envio depende da idempotência da API externa para não duplicar efeitos.
+- A fila não possui `operationId`, versão remota ou cursor. A conclusão usa precedência por `completedAt`, mas confirmações interrompidas ainda dependem do contrato da API para nova tentativa.
 - Os documentos são baixados sob demanda; não há checksum, versionamento nem garantia de disponibilidade offline.
 - Fotos e coordenadas podem ser dados pessoais. Não devem aparecer em logs e precisam de políticas de retenção, acesso e exclusão na API de domínio.
 

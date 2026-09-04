@@ -32,6 +32,10 @@ Para aplicar o schema definido em `src/db/schema.ts`:
 npx drizzle-kit push
 ```
 
+Para aplicar a migração versionada de `concluido_em` em um banco já existente,
+use `npx drizzle-kit migrate`. Ela preenche vistorias históricas concluídas com
+o valor de `atualizado_em`.
+
 O cliente do banco está em `src/db/index.ts`; importe `db` e as tabelas de
 `src/db/schema.ts` nos services que implementar.
 
@@ -41,13 +45,19 @@ O cadastro web envia `POST /vistorias` em JSON com `userId` e `description`.
 Toda vistoria é criada com `pendente: true`.
 
 O aplicativo mobile deve usar `PUT /vistorias/:id` em `multipart/form-data`
-para registrar `latitude`, `longitude` e a imagem no campo `photo`. Latitude e
-longitude devem ser enviadas juntas; a imagem aceita apenas arquivos de imagem
-de até 10 MB. Use `GET /vistorias/:id/foto` para visualizar uma foto já
-cadastrada.
+para registrar `pendente: false`, `completedAt` ISO-8601, `latitude`,
+`longitude` e a imagem no campo `photo`. Latitude e longitude devem ser
+enviadas juntas; a imagem aceita apenas arquivos de imagem de até 10 MB.
 
-As listagens de vistorias retornam apenas os metadados das imagens, não o
-conteúdo binário.
+`completedAt` é persistido em `concluido_em` e decide a conclusão: a menor
+data vence, mesmo que seja recebida depois. Em empate, vence a primeira linha
+persistida. A conclusão é terminal; reabertura e alterações isoladas de uma
+vistoria concluída são recusadas. Uma marcação igual ou posterior retorna
+`409 INSPECTION_COMPLETION_CONFLICT` com os dados vencedores. Use
+`GET /vistorias/:id/foto` para visualizar uma foto já cadastrada.
+
+As listagens de vistorias retornam `completedAt` e os metadados das imagens,
+mas não o conteúdo binário.
 
 ## Documentos
 

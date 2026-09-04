@@ -218,7 +218,7 @@ export default function DetalhesVistoria() {
                     </div>
                     <div className="grid gap-2 py-4 sm:grid-cols-[13rem_minmax(0,1fr)]">
                       <dt className="font-semibold text-[#1E274A]">Finalizado em</dt>
-                      <dd className="font-mono text-[#40516C]">{formatarData(vistoria.updatedAt)}</dd>
+                      <dd className="font-mono text-[#40516C]">{vistoria.completedAt ? formatarData(vistoria.completedAt) : 'Data indisponível'}</dd>
                     </div>
                   </dl>
                 </section>

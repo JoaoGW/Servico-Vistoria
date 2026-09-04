@@ -33,6 +33,7 @@ function preencherVistoria(vistoria: VistoriaModel, dados: VistoriaApi) {
   vistoria.latitude = dados.latitude;
   vistoria.longitude = dados.longitude;
   vistoria.pendente = dados.pendente;
+  vistoria.completedAt = dados.completedAt ? new Date(dados.completedAt) : null;
   vistoria.createdAt = new Date(dados.createdAt);
   vistoria.updatedAt = new Date(dados.updatedAt);
 }
@@ -119,7 +120,20 @@ export async function sincronizarVistorias(vistoriasApi: VistoriaApi[]) {
   });
 }
 
+/** Atualiza uma única vistoria local com a versão canônica retornada pela API. */
+export async function aplicarVistoriaDaApi(dados: VistoriaApi) {
+  const vistorias = database.get<VistoriaModel>("vistorias");
+  const vistoria = await vistorias.find(dados.id);
+
+  await database.write(async () => {
+    await vistoria.update((registro) => {
+      preencherVistoria(registro, dados);
+    });
+  });
+}
+
 interface IDadosConclusaoVistoria {
+  completedAt: string;
   id: string;
   latitude: number;
   longitude: number;
@@ -127,6 +141,7 @@ interface IDadosConclusaoVistoria {
 }
 
 interface IDadosConclusaoVistoriaOffline {
+  completedAt: string;
   fotoNome: string;
   fotoMimeType: string;
   fotoUri: string;
@@ -149,6 +164,7 @@ function preencherConclusaoVistoriaLocal(
   registro.longitude = dados.longitude;
   registro.photoMimeType = dados.photoMimeType;
   registro.pendente = false;
+  registro.completedAt = new Date(dados.completedAt);
   registro.updatedAt = new Date();
 }
 
@@ -158,23 +174,14 @@ function preencherConclusaoVistoriaLocal(
  * @returns Conclui após persistir as alterações no banco local.
  * @throws Retorna erro quando a vistoria não for encontrada ou a gravação falhar.
  */
-export async function concluirVistoriaLocal({
-  id,
-  latitude,
-  longitude,
-  photoMimeType,
-}: IDadosConclusaoVistoria) {
+export async function concluirVistoriaLocal(dados: IDadosConclusaoVistoria) {
+  const { id } = dados;
   const vistorias = database.get<VistoriaModel>("vistorias");
   const vistoria = await vistorias.find(id);
 
   await database.write(async () => {
     await vistoria.update((registro) => {
-      preencherConclusaoVistoriaLocal(registro, {
-        id,
-        latitude,
-        longitude,
-        photoMimeType,
-      });
+      preencherConclusaoVistoriaLocal(registro, dados);
     });
   });
 }
@@ -186,6 +193,7 @@ export async function concluirVistoriaLocal({
  * @throws Retorna erro quando a vistoria não for encontrada ou a gravação falhar.
  */
 export async function concluirVistoriaOffline({
+  completedAt,
   fotoNome,
   fotoUri,
   id,
@@ -209,9 +217,11 @@ export async function concluirVistoriaOffline({
         conclusao.fotoMimeType = fotoMimeType;
         conclusao.fotoNome = fotoNome;
         conclusao.criadaEm = new Date();
+        conclusao.completedAt = new Date(completedAt);
       }),
       vistoria.prepareUpdate((registro) => {
         preencherConclusaoVistoriaLocal(registro, {
+          completedAt,
           id,
           latitude,
           longitude,
@@ -223,14 +233,14 @@ export async function concluirVistoriaOffline({
 }
 
 /**
- * Lista as conclusões aguardando envio à API em ordem de criação.
+ * Lista as conclusões aguardando envio à API em ordem de conclusão.
  * @returns Retorna as conclusões pendentes armazenadas localmente.
  * @throws Retorna erro quando a consulta ao banco local falhar.
  */
 export async function listarConclusoesPendentes() {
   return database
     .get<ConclusaoPendenteModel>("conclusoes_pendentes")
-    .query(Q.sortBy("criada_em", Q.asc))
+    .query(Q.sortBy("concluido_em", Q.asc))
     .fetch();
 }
 

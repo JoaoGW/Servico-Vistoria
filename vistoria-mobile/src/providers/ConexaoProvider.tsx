@@ -52,6 +52,7 @@ export function ProvedorConexao({ children }: PropsWithChildren) {
   const [erroSincronizacao, setErroSincronizacao] = useState<string | null>(
     null,
   );
+  const [avisoConflito, setAvisoConflito] = useState<string | null>(null);
   const sincronizacaoEmAndamento = useRef(false);
   const estadoAnterior = useRef<EstadoConexao | null>(null);
 
@@ -69,7 +70,13 @@ export function ProvedorConexao({ children }: PropsWithChildren) {
     setErroSincronizacao(null);
 
     try {
-      await sincronizarDadosComApi();
+      const resultado = await sincronizarDadosComApi();
+
+      if (resultado.conflitos.length) {
+        setAvisoConflito(
+          "Uma ou mais vistorias já haviam sido concluídas por uma marcação anterior. Os dados vencedores foram atualizados.",
+        );
+      }
     } catch (error) {
       console.error("Não foi possível sincronizar os dados locais.", error);
       setErroSincronizacao(
@@ -158,6 +165,13 @@ export function ProvedorConexao({ children }: PropsWithChildren) {
           onRetry={() => {
             void sincronizarAgora();
           }}
+        />
+      ) : null}
+      {avisoConflito ? (
+        <ErrorModal
+          message={avisoConflito}
+          title="Vistoria já concluída"
+          onClose={() => setAvisoConflito(null)}
         />
       ) : null}
     </ConexaoContexto.Provider>

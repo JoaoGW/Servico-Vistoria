@@ -52,12 +52,15 @@ export async function PUT(request: Request) {
     const requisicaoParaFormulario = request.clone();
     const formData = await requisicaoParaFormulario.formData();
     const [id] = formData.getAll("id");
+    const [completedAt] = formData.getAll("completedAt");
     const [photo] = formData.getAll("photo");
     const [latitude] = formData.getAll("latitude");
     const [longitude] = formData.getAll("longitude");
 
     if (
       typeof id !== "string" ||
+      typeof completedAt !== "string" ||
+      Number.isNaN(Date.parse(completedAt)) ||
       !photo ||
       typeof latitude !== "string" ||
       typeof longitude !== "string"
@@ -65,7 +68,7 @@ export async function PUT(request: Request) {
       return Response.json(
         {
           error:
-            "Não foram disponibilizados identificação, foto e localização no envio da requisição",
+            "Não foram disponibilizados identificação, data de conclusão, foto e localização no envio da requisição",
         },
         { status: 400 },
       );
@@ -107,11 +110,17 @@ export async function PUT(request: Request) {
     });
 
     if (!response.ok) {
-      const detalhe = await response.text();
+      const detalhe = (await response.json().catch(() => null)) as {
+        code?: string;
+        message?: string;
+        vistoria?: unknown;
+      } | null;
 
       return Response.json(
         {
-          error: detalhe || "Não foi possível concluir a vistoria na API.",
+          code: detalhe?.code,
+          error: detalhe?.message ?? "Não foi possível concluir a vistoria na API.",
+          vistoria: detalhe?.vistoria,
         },
         { status: response.status },
       );
