@@ -333,7 +333,7 @@ Com a configuração do exemplo, ela estará em http://localhost:3001.
 Crie vistoria-web/.env.local:
 
 ~~~dotenv
-APIS_URL=http://localhost:3001
+EXPO_PUBLIC_API_URL=http://10.0.2.2:3001
 ~~~
 
 Não inclua barra no fim. A variável é lida pelos Route Handlers do Next.js,
@@ -358,13 +358,11 @@ Crie vistoria-mobile/.env.local:
 APIS_URL=http://localhost:3001
 ~~~
 
-Quando a API e o servidor Expo executam na mesma máquina em desenvolvimento,
-esse é o ponto de partida correto. O nome api só existe dentro da rede Docker e
-não deve ser usado nesse arquivo.
-
-Em dispositivo físico ou quando as API Routes estiverem implantadas, valide qual
-processo atende /api e use uma origem alcançável por ele. Isso normalmente exige
-IP de rede local ou URL HTTPS publicada, em vez de assumir localhost.
+No emulador Android, `10.0.2.2` representa a máquina host e alcança a API
+publicada pelo Docker na porta 3001. O nome `api` só existe dentro da rede
+Docker e não deve ser usado nesse arquivo. Em dispositivo físico, use o IP LAN
+do computador; em produção, use uma URL HTTPS pública da API. Essa variável é
+incorporada ao aplicativo, portanto não inclua senhas, tokens ou outros segredos.
 
 Instale as dependências:
 
@@ -408,9 +406,9 @@ run:android exige Android Studio, SDK e emulador ou dispositivo configurados.
 npm run ios usa o fluxo nativo do Expo para um dispositivo iOS e requer macOS,
 Xcode e configuração de assinatura.
 
-Em builds nativos de produção, as API Routes do Expo Router precisam estar
-implantadas e ter uma origem configurada. Subir apenas os contêineres não
-publica essas rotas para Android ou iOS.
+O aplicativo chama a API Nest diretamente. Para builds de produção, defina
+`EXPO_PUBLIC_API_URL` com a URL HTTPS pública da API antes de gerar o bundle.
+Subir os contêineres locais não torna `localhost` acessível em um aparelho físico.
 
 ## Verificação da instalação
 
@@ -574,8 +572,9 @@ WEB_PORT=3003
 Reinicie a composição. Internamente, API e portal continuam nas portas 3001 e
 3000; externamente, use http://localhost:3002 e http://localhost:3003.
 
-No modo local sem Docker, altere também PORT em vistoria-back/.env.local e os
-valores APIS_URL em vistoria-web/.env.local e vistoria-mobile/.env.local.
+No modo local sem Docker, altere também PORT em vistoria-back/.env.local,
+APIS_URL em vistoria-web/.env.local e EXPO_PUBLIC_API_URL em
+vistoria-mobile/.env.local.
 
 ### O portal não consegue consultar a API
 
@@ -592,11 +591,11 @@ de forma explícita; o .env da raiz é exclusivo do Docker Compose.
 
 ### O mobile não abre ou não acessa a API
 
-Confirme Expo, emulador/dispositivo e a origem usada pelas API Routes.
-localhost não representa automaticamente a máquina de desenvolvimento para
-todos os processos nativos. Em dispositivo físico, use uma URL LAN ou HTTPS
-alcançável pela rota /api e mantenha dispositivo e servidor na mesma rede
-quando usar LAN.
+Confirme Expo, emulador/dispositivo e EXPO_PUBLIC_API_URL. No emulador Android,
+use http://10.0.2.2:3001; localhost não representa automaticamente a máquina de
+desenvolvimento para processos nativos. Em dispositivo físico, use uma URL LAN
+ou HTTPS alcançável e mantenha dispositivo e servidor na mesma rede quando usar
+LAN.
 
 Confira também as permissões de câmera e localização. Sem elas, o aplicativo
 não consegue registrar a evidência exigida para concluir a vistoria.

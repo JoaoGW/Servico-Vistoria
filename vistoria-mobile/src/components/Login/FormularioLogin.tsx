@@ -18,19 +18,21 @@ interface Autenticacao {
 }
 
 /**
- * Autentica o usuário na rota de login do portal.
+ * Autentica o usuário diretamente na API de domínio.
  * @param dados - E-mail e senha informados pelo usuário.
  * @returns Retorna os dados de acesso disponibilizados pela API.
  * @throws Retorna erro quando a autenticação ou a requisição falhar.
  */
 export const login = async ({ email, senha }: Autenticacao) => {
   try {
-    const response = await fetch(`/api/auth/login`, {
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL + "/usuarios/login";
+
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, senha }),
+      body: JSON.stringify({ email, password: senha }),
     });
 
     if (!response.ok) {

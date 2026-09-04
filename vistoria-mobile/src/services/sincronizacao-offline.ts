@@ -73,7 +73,9 @@ function obterNomePersistenteArquivo({
  * @throws Retorna erro quando a API não puder recuperar as vistorias.
  */
 async function buscarVistorias(token: string) {
-  const response = await fetch("/api/vistorias/verVistorias", {
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL + "/vistorias";
+
+  const response = await fetch(apiUrl, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -94,7 +96,9 @@ async function buscarVistorias(token: string) {
  * @throws Retorna erro quando a API não puder recuperar os documentos.
  */
 async function buscarDocumentos(token: string) {
-  const response = await fetch("/api/documentos/recuperarDocumentos", {
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL + "/documentos";
+
+  const response = await fetch(apiUrl, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -131,10 +135,14 @@ export async function enviarConclusaoVistoria(
       id: dadosConclusao.id,
       latitude: String(dadosConclusao.latitude),
       longitude: String(dadosConclusao.longitude),
+      pendente: "false",
     },
   });
 
-  const response = await fetch("/api/vistorias/concluirVistoria", {
+  const apiUrl =
+    process.env.EXPO_PUBLIC_API_URL + "/vistorias/" + dadosConclusao.id;
+
+  const response = await fetch(apiUrl, {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -146,6 +154,7 @@ export async function enviarConclusaoVistoria(
   const resposta = (await response.json().catch(() => null)) as {
     code?: string;
     error?: string;
+    message?: string;
     vistoria?: VistoriaApi;
   } | null;
 
@@ -158,10 +167,64 @@ export async function enviarConclusaoVistoria(
   }
 
   if (!response.ok) {
-    throw new Error(resposta?.error ?? "Não foi possível concluir a vistoria.");
+    throw new Error(
+      resposta?.error ??
+        resposta?.message ??
+        "Não foi possível concluir a vistoria.",
+    );
   }
 
   return resposta as VistoriaApi;
+}
+
+/**
+ * Atualiza as vistorias locais com os dados recebidos da API.
+ * @param token - Token de acesso usado na autorização da requisição.
+ * @returns Conclui após aplicar as vistorias recebidas no banco local.
+ */
+async function sincronizarVistoriasDaApi(token: string) {
+  const vistoriasApi = await buscarVistorias(token);
+
+  await sincronizarVistorias(vistoriasApi);
+}
+
+/**
+ * Atualiza os documentos locais com os dados recebidos da API.
+ * @param token - Token de acesso usado na autorização da requisição.
+ * @returns Conclui após aplicar os documentos recebidos no banco local.
+ */
+async function sincronizarDocumentosDaApi(token: string) {
+  const documentosApi = await buscarDocumentos(token);
+
+  await sincronizarDocumentos(documentosApi);
+}
+
+/**
+ * Atualiza as vistorias locais quando houver uma sessão autenticada.
+ * @returns Conclui sem consultar a API quando não houver token de acesso.
+ */
+export async function sincronizarVistoriasComApi() {
+  const token = await AsyncStorage.getItem("accessToken");
+
+  if (!token) {
+    return;
+  }
+
+  await sincronizarVistoriasDaApi(token);
+}
+
+/**
+ * Atualiza os documentos locais quando houver uma sessão autenticada.
+ * @returns Conclui sem consultar a API quando não houver token de acesso.
+ */
+export async function sincronizarDocumentosComApi() {
+  const token = await AsyncStorage.getItem("accessToken");
+
+  if (!token) {
+    return;
+  }
+
+  await sincronizarDocumentosDaApi(token);
 }
 
 /**
@@ -176,7 +239,9 @@ export async function enfileirarConclusaoVistoria(
   const arquivoDeOrigem = new File(dadosConclusao.fotoUri);
 
   if (!arquivoDeOrigem.exists) {
-    throw new Error("A foto da vistoria não está mais disponível para sincronização.");
+    throw new Error(
+      "A foto da vistoria não está mais disponível para sincronização.",
+    );
   }
 
   const diretorioDePendencias = new Directory(
@@ -275,14 +340,9 @@ export async function sincronizarDadosComApi() {
     }
   }
 
-  const [vistoriasApi, documentosApi] = await Promise.all([
-    buscarVistorias(token),
-    buscarDocumentos(token),
-  ]);
-
   await Promise.all([
-    sincronizarVistorias(vistoriasApi),
-    sincronizarDocumentos(documentosApi),
+    sincronizarVistoriasDaApi(token),
+    sincronizarDocumentosDaApi(token),
   ]);
 
   return { conflitos };

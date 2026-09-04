@@ -32,7 +32,7 @@ O backend armazena imagens de vistorias e arquivos de documentos diretamente
 no PostgreSQL. A interface web chama as rotas internas do Next.js, que por sua
 vez se comunicam com a API configurada pela variável `APIS_URL`. O aplicativo
 mobile mantém uma cópia de trabalho local, com fila para conclusões feitas sem
-conexão, e encaminha chamadas por API Routes do Expo Router.
+conexão, e chama a API Nest diretamente por uma URL pública configurada no bundle.
 
 ## Fluxo de vistoria
 
@@ -175,13 +175,13 @@ porta deve ser a mesma definida por `PORT` no backend.
 Crie `vistoria-mobile/.env.local` apontando para a API:
 
 ```env
-APIS_URL=http://SEU_HOST_ACESSIVEL:3001
+EXPO_PUBLIC_API_URL=http://10.0.2.2:3001
 ```
 
-Em um dispositivo físico, `localhost` aponta para o próprio dispositivo. Use
-um host acessível pela rede do aparelho. Em builds nativos, as API Routes do
-Expo Router também precisam estar implantadas em uma origem configurada para o
-aplicativo.
+O emulador Android acessa a máquina host em `10.0.2.2`. Em um dispositivo
+físico, `localhost` aponta para o próprio dispositivo: use o IP LAN do
+computador. Em produção, configure uma origem HTTPS pública da API Nest. A URL
+fica visível no aplicativo, portanto não inclua segredos nela.
 
 ## Instalação e primeira execução
 
@@ -414,9 +414,8 @@ portal mantido, execute `npx eslint app components utils` em `vistoria-web/`.
 - Evoluir a sincronização mobile com `operationId`, versão por entidade, cursor
   incremental, retentativa persistente e telemetria, preservando a regra de
   menor `completedAt` e a conclusão terminal.
-- Implantar as API Routes do Expo Router em uma origem HTTPS configurada para
-  builds nativos e testar permissões, fila offline e recuperação após
-  interrupção de rede em dispositivos reais.
+- Publicar a API Nest em HTTPS para builds nativos e testar permissões, fila
+  offline e recuperação após interrupção de rede em dispositivos reais.
 
 ## Segurança e limites conhecidos
 
@@ -442,4 +441,4 @@ portal mantido, execute `npx eslint app components utils` em `vistoria-web/`.
 - [Contratos de integração web](vistoria-web/docs/REQUISICOES_API.md)
 - [Arquitetura offline-first do portal](vistoria-web/docs/ARQUITETURA.md)
 - [Aplicativo mobile](vistoria-mobile/README.md)
-- [Arquitetura e API Routes mobile](vistoria-mobile/docs/ARQUITETURA.md)
+- [Arquitetura mobile offline-first](vistoria-mobile/docs/ARQUITETURA.md)
