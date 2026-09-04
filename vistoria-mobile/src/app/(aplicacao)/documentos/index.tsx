@@ -1,10 +1,12 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState } from "react";
+import { Alert, Platform } from "react-native";
+
 import { File, Paths } from "expo-file-system";
 import * as FileSystem from "expo-file-system/legacy";
 import * as IntentLauncher from "expo-intent-launcher";
 import * as Sharing from "expo-sharing";
-import { useEffect, useState } from "react";
-import { Alert, Platform } from "react-native";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { IndicadorConexao } from "@/components/IndicadorConexao";
 import { AvisoSemDocumentos } from "@/components/ItensVazios/AvisoSemDocumentos";
@@ -45,7 +47,9 @@ export default function PaginaDocumentos() {
       const token = await AsyncStorage.getItem("accessToken");
 
       if (!token) {
-        throw new Error("Sua sessão expirou. Entre novamente para abrir o documento.");
+        throw new Error(
+          "Sua sessão expirou. Entre novamente para abrir o documento.",
+        );
       }
 
       const response = await fetch(`/api/documentos/${documento.id}/arquivo`, {
@@ -82,7 +86,9 @@ export default function PaginaDocumentos() {
       }
 
       if (!(await Sharing.isAvailableAsync())) {
-        throw new Error("Não há um visualizador de arquivos disponível neste dispositivo.");
+        throw new Error(
+          "Não há um visualizador de arquivos disponível neste dispositivo.",
+        );
       }
 
       await Sharing.shareAsync(arquivo.uri, {
