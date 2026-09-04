@@ -11,6 +11,11 @@ interface IGluestackUIProviderProps {
   style?: ViewProps['style']
 }
 
+/**
+ * Disponibiliza os contextos visuais e de sobreposição do Gluestack UI.
+ * @param props - Componentes filhos e estilo aplicados ao contêiner raiz.
+ * @returns Retorna a árvore de provedores da interface.
+ */
 export function GluestackUIProvider({ children, style }: IGluestackUIProviderProps) {
   return (
     <View style={[config.light, { flex: 1, height: '100%', width: '100%' }, style]}>

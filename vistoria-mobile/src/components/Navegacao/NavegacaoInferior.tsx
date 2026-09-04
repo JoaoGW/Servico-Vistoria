@@ -34,6 +34,11 @@ const itensNavegacao = [
   },
 ] satisfies IItemNavegacao[];
 
+/**
+ * Exibe a navegação inferior e destaca a aba atualmente selecionada.
+ * @param props - Identificador da aba ativa na rota atual.
+ * @returns Retorna a barra de navegação inferior.
+ */
 export function NavegacaoInferior({ abaAtiva }: INavegacaoInferiorProps) {
   const router = useRouter();
 

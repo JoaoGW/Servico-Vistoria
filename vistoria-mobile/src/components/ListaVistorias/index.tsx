@@ -11,6 +11,11 @@ interface IListaVistoriasProps {
   vistorias: VistoriaModel[];
 }
 
+/**
+ * Exibe as vistorias e permite definir qual delas está ativa.
+ * @param props - Vistorias que serão listadas para seleção.
+ * @returns Retorna a lista de vistorias renderizada.
+ */
 export function ListaVistorias({ vistorias }: IListaVistoriasProps) {
   const vistoriaAtiva = useVistoriaStore((estado) => estado.vistoriaAtiva);
   const selecionarVistoria = useVistoriaStore(

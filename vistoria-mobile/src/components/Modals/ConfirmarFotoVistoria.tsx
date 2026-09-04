@@ -15,6 +15,11 @@ interface IConfirmarFotoVistoriaProps {
   onTirarOutra: () => void;
 }
 
+/**
+ * Exibe a foto capturada e as ações para confirmar, cancelar ou refazê-la.
+ * @param props - Foto, estado de envio e ações disponíveis no modal.
+ * @returns Retorna o modal de confirmação da foto da vistoria.
+ */
 export function ConfirmarFotoVistoria({
   carregando,
   fotoUri,

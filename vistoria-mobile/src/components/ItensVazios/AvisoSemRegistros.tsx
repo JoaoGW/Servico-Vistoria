@@ -9,6 +9,11 @@ interface IAvisoSemRegistrosProps {
   mensagem: string;
 }
 
+/**
+ * Exibe uma mensagem de estado vazio com ícone contextual.
+ * @param props - Ícone e mensagem apresentados no aviso.
+ * @returns Retorna o alerta de ausência de registros.
+ */
 export function AvisoSemRegistros({
   icone,
   mensagem,

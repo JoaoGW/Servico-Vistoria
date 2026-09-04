@@ -3,6 +3,7 @@ import { Slot, usePathname } from 'expo-router'
 import { NavegacaoInferior } from '@/components/Navegacao/NavegacaoInferior'
 import { Box } from '@/components/ui/box'
 import { SafeAreaView } from '@/components/ui/safe-area-view'
+import { ProvedorConexao } from '@/providers/ConexaoProvider'
 
 function obterAbaAtiva(caminho: string) {
   if (caminho.startsWith('/vistorias')) {
@@ -20,11 +21,13 @@ export default function LayoutAplicacao() {
   const caminho = usePathname()
 
   return (
-    <SafeAreaView className="flex-1 bg-vistoria-fundo" edges={['top', 'bottom']}>
-      <Box className="flex-1">
-        <Slot />
-      </Box>
-      <NavegacaoInferior abaAtiva={obterAbaAtiva(caminho)} />
-    </SafeAreaView>
+    <ProvedorConexao>
+      <SafeAreaView className="flex-1 bg-vistoria-fundo" edges={['top', 'bottom']}>
+        <Box className="flex-1">
+          <Slot />
+        </Box>
+        <NavegacaoInferior abaAtiva={obterAbaAtiva(caminho)} />
+      </SafeAreaView>
+    </ProvedorConexao>
   )
 }

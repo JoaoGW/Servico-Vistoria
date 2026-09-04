@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useRouter } from "expo-router";
 
@@ -18,12 +18,10 @@ interface Autenticacao {
 }
 
 /**
- * Responsável por chamar a rota de autenticação do portal.
- *
- * @param email - E-mail informado pelo usuário.
- * @param senha - Senha informada pelo usuário.
- * @returns Retorna o token de acesso disponibilizado pela API.
- * @throws Will throw an error if the request fails or the response is not successful.
+ * Autentica o usuário na rota de login do portal.
+ * @param dados - E-mail e senha informados pelo usuário.
+ * @returns Retorna os dados de acesso disponibilizados pela API.
+ * @throws Retorna erro quando a autenticação ou a requisição falhar.
  */
 export const login = async ({ email, senha }: Autenticacao) => {
   try {
@@ -57,12 +55,48 @@ export const login = async ({ email, senha }: Autenticacao) => {
   }
 };
 
+/**
+ * Exibe o formulário de login e verifica uma sessão salva ao iniciar.
+ * @returns Retorna o formulário e o modal de erro quando necessário.
+ */
 export function FormularioLogin() {
   const [email, setEmail] = useState<Autenticacao["email"]>("");
   const [senha, setSenha] = useState<Autenticacao["senha"]>("");
   const [modalErro, setModalErro] = useState<boolean>(false);
+  const [estaVerificandoToken, setEstaVerificandoToken] = useState(true);
 
   const router = useRouter();
+
+  useEffect(() => {
+    let estaMontado = true;
+
+    /**
+     * Verifica se existe um token salvo e redireciona para a tela inicial.
+     * @returns Conclui após verificar o armazenamento local.
+     */
+    const verificarTokenSalvo = async () => {
+      try {
+        const token = await AsyncStorage.getItem("accessToken");
+
+        if (token?.trim()) {
+          router.replace("/home");
+          return;
+        }
+      } catch (error) {
+        console.error("Não foi possível verificar o token salvo.", error);
+      } finally {
+        if (estaMontado) {
+          setEstaVerificandoToken(false);
+        }
+      }
+    };
+
+    void verificarTokenSalvo();
+
+    return () => {
+      estaMontado = false;
+    };
+  }, [router]);
 
   return (
     <>
@@ -89,7 +123,12 @@ export function FormularioLogin() {
       <Pressable
         accessibilityLabel="Fazer Login"
         accessibilityRole="button"
+        accessibilityState={{
+          busy: estaVerificandoToken,
+          disabled: estaVerificandoToken,
+        }}
         className="mt-8 h-14 items-center justify-center rounded-xl bg-vistoria-marca data-[active=true]:bg-vistoria-marca-pressionada"
+        disabled={estaVerificandoToken}
         onPress={async () => {
           try {
             const data = await login({ email, senha });
@@ -100,7 +139,9 @@ export function FormularioLogin() {
           }
         }}
       >
-        <Text className="text-lg font-bold text-white">Fazer Login</Text>
+        <Text className="text-lg font-bold text-white">
+          {estaVerificandoToken ? "Carregando..." : "Fazer Login"}
+        </Text>
       </Pressable>
 
       <Pressable

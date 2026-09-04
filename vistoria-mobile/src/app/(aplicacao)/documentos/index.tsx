@@ -1,10 +1,12 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState } from "react";
+import { Alert, Platform } from "react-native";
+
 import { File, Paths } from "expo-file-system";
 import * as FileSystem from "expo-file-system/legacy";
 import * as IntentLauncher from "expo-intent-launcher";
 import * as Sharing from "expo-sharing";
-import { useEffect, useState } from "react";
-import { Alert, Platform } from "react-native";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { IndicadorConexao } from "@/components/IndicadorConexao";
 import { AvisoSemDocumentos } from "@/components/ItensVazios/AvisoSemDocumentos";
@@ -15,30 +17,6 @@ import { Text } from "@/components/ui/text";
 
 import { database } from "@/db";
 import { DocumentoModel } from "@/db/models/Documento";
-import { sincronizarDocumentos } from "@/db/sincronizacao";
-import type { DocumentoApi } from "@/db/types";
-
-/**
- * Busca todos os documentos disponíveis para o usuário autenticado.
- *
- * @param token - Token JWT usado na autorização da requisição.
- * @returns Retorna a lista de documentos cadastrados.
- * @throws Will throw an error if the request fails or the response is not successful.
- */
-const visualizarDocumentos = async (token: string) => {
-  const response = await fetch("/api/documentos/recuperarDocumentos", {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("Não foi possível recuperar os documentos.");
-  }
-
-  return response.json() as Promise<DocumentoApi[]>;
-};
 
 function obterNomeSeguroArquivo(documento: DocumentoModel) {
   const nome = documento.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -62,28 +40,6 @@ export default function PaginaDocumentos() {
     return () => inscricao.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    const atualizarDocumentos = async () => {
-      const token = await AsyncStorage.getItem("accessToken");
-
-      if (!token) {
-        return;
-      }
-
-      try {
-        const documentosApi = await visualizarDocumentos(token);
-        await sincronizarDocumentos(documentosApi);
-      } catch (error) {
-        console.error(
-          "Não foi possível atualizar os documentos locais.",
-          error,
-        );
-      }
-    };
-
-    void atualizarDocumentos();
-  }, []);
-
   const abrirDocumento = async (documento: DocumentoModel) => {
     setDocumentoAbrindoId(documento.id);
 
@@ -91,7 +47,9 @@ export default function PaginaDocumentos() {
       const token = await AsyncStorage.getItem("accessToken");
 
       if (!token) {
-        throw new Error("Sua sessão expirou. Entre novamente para abrir o documento.");
+        throw new Error(
+          "Sua sessão expirou. Entre novamente para abrir o documento.",
+        );
       }
 
       const response = await fetch(`/api/documentos/${documento.id}/arquivo`, {
@@ -128,7 +86,9 @@ export default function PaginaDocumentos() {
       }
 
       if (!(await Sharing.isAvailableAsync())) {
-        throw new Error("Não há um visualizador de arquivos disponível neste dispositivo.");
+        throw new Error(
+          "Não há um visualizador de arquivos disponível neste dispositivo.",
+        );
       }
 
       await Sharing.shareAsync(arquivo.uri, {

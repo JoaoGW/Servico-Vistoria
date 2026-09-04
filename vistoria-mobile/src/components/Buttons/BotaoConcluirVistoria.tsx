@@ -11,6 +11,11 @@ interface IBotaoConcluirVistoriaProps {
   possuiVistoriaAtiva: boolean;
 }
 
+/**
+ * Exibe a ação para selecionar ou concluir a vistoria ativa.
+ * @param props - Estado da conclusão e ações disparadas pelo botão.
+ * @returns Retorna o botão apropriado para o estado atual da vistoria.
+ */
 export function BotaoConcluirVistoria({
   estaConcluindo,
   onPress,

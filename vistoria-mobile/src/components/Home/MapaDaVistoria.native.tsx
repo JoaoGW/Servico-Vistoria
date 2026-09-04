@@ -15,6 +15,11 @@ interface IMapaDaVistoriaProps {
   coordenadas: { latitude: number; longitude: number } | null;
 }
 
+/**
+ * Exibe o mapa e um marcador para as coordenadas atuais da vistoria.
+ * @param props - Coordenadas que definem o centro e o marcador do mapa.
+ * @returns Retorna o mapa ou seu estado de carregamento.
+ */
 export function MapaDaVistoria({ coordenadas }: IMapaDaVistoriaProps) {
   const [conteudoMapa, setConteudoMapa] = useState<string | null>(null);
   const posicaoAtual = coordenadas
@@ -34,6 +39,10 @@ export function MapaDaVistoria({ coordenadas }: IMapaDaVistoriaProps) {
   useEffect(() => {
     let estaMontado = true;
 
+    /**
+     * Carrega o arquivo HTML do mapa para o componente Leaflet.
+     * @returns Conclui após disponibilizar o conteúdo do mapa no estado.
+     */
     const carregarMapa = async () => {
       const assetMapa = Asset.fromModule(ARQUIVO_LEAFLET);
 

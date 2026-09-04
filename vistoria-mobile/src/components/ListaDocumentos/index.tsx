@@ -12,6 +12,11 @@ interface IListaDocumentosProps {
   onAbrirDocumento: (documento: DocumentoModel) => void;
 }
 
+/**
+ * Identifica um rótulo legível para o tipo de arquivo do documento.
+ * @param documento - Documento cujo tipo será identificado.
+ * @returns Retorna o rótulo correspondente ao tipo do arquivo.
+ */
 function obterTipoArquivo(documento: DocumentoModel) {
   const mimeType = documento.fileMimeType.toLowerCase();
   const extensao = documento.fileName.split(".").pop()?.toLowerCase();
@@ -35,6 +40,11 @@ function obterTipoArquivo(documento: DocumentoModel) {
   return extensao ? `Arquivo ${extensao.toUpperCase()}` : "Arquivo";
 }
 
+/**
+ * Exibe os documentos disponíveis e permite abri-los individualmente.
+ * @param props - Lista de documentos, item em abertura e ação de abertura.
+ * @returns Retorna a lista de documentos renderizada.
+ */
 export function ListaDocumentos({
   documentos,
   documentoAbrindoId,

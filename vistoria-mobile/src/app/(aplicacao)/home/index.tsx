@@ -1,7 +1,9 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useState } from "react";
+
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "react-native";
 
 import { BotaoConcluirVistoria } from "@/components/Buttons/BotaoConcluirVistoria";
@@ -12,15 +14,21 @@ import { Box } from "@/components/ui/box";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 
-import { useRelogioGlobal } from "@/hooks/use-relogio-global";
 import {
   obterCoordenadasAtuais,
   useLocalizacaoAtual,
 } from "@/hooks/use-localizacao-atual";
+import { useRelogioGlobal } from "@/hooks/use-relogio-global";
+
+import { useConexao } from "@/providers/ConexaoProvider";
+import { useVistoriaStore } from "@/stores/use-vistoria-store";
 
 import { concluirVistoriaLocal } from "@/db/sincronizacao";
-import { criarCorpoMultipart } from "@/services/criar-corpo-multipart";
-import { useVistoriaStore } from "@/stores/use-vistoria-store";
+
+import {
+  enfileirarConclusaoVistoria,
+  enviarConclusaoVistoria,
+} from "@/services/sincronizacao-offline";
 
 function abreviarDescricao(descricao: string) {
   return descricao.length > 20 ? `${descricao.slice(0, 20)}...` : descricao;
@@ -38,6 +46,7 @@ export default function PaginaInicial() {
     useState<ImagePicker.ImagePickerAsset | null>(null);
   const [estaConcluindo, setEstaConcluindo] = useState(false);
   const coordenadasAtuais = useLocalizacaoAtual();
+  const { estaOnline, estadoConexao } = useConexao();
 
   const capturarFoto = async () => {
     try {
@@ -74,63 +83,60 @@ export default function PaginaInicial() {
       return;
     }
 
+    if (estadoConexao === "verificando") {
+      Alert.alert(
+        "Verificando conexão",
+        "Aguarde um instante antes de concluir a vistoria.",
+      );
+      return;
+    }
+
     setEstaConcluindo(true);
 
     try {
       const localizacao = await obterCoordenadasAtuais();
-      const token = await AsyncStorage.getItem("accessToken");
-
-      if (!token) {
-        throw new Error(
-          "Sua sessão expirou. Entre novamente para concluir a vistoria.",
-        );
-      }
-
       const mimeType = fotoParaConfirmar.mimeType ?? "image/jpeg";
       const nomeArquivo =
         fotoParaConfirmar.fileName ?? `vistoria-${vistoriaAtiva.id}.jpg`;
-      const dados = await criarCorpoMultipart({
-        arquivo: {
-          campo: "photo",
-          mimeType,
-          nome: nomeArquivo,
-          uri: fotoParaConfirmar.uri,
-        },
-        campos: {
-          id: vistoriaAtiva.id,
-          latitude: String(localizacao.latitude),
-          longitude: String(localizacao.longitude),
-        },
-      });
-
-      const response = await fetch("/api/vistorias/concluirVistoria", {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": dados.contentType,
-        },
-        body: dados.body,
-      });
-
-      if (!response.ok) {
-        const respostaErro = (await response.json().catch(() => null)) as {
-          error?: string;
-        } | null;
-
-        throw new Error(
-          respostaErro?.error ?? "Não foi possível concluir a vistoria.",
-        );
-      }
-
-      await concluirVistoriaLocal({
+      const dadosConclusao = {
+        fotoMimeType: mimeType,
+        fotoNome: nomeArquivo,
+        fotoUri: fotoParaConfirmar.uri,
         id: vistoriaAtiva.id,
         latitude: localizacao.latitude,
         longitude: localizacao.longitude,
-        photoMimeType: mimeType,
-      });
+      };
+
+      if (estaOnline) {
+        const token = await AsyncStorage.getItem("accessToken");
+
+        if (!token) {
+          throw new Error(
+            "Sua sessão expirou. Entre novamente para concluir a vistoria.",
+          );
+        }
+
+        await enviarConclusaoVistoria(dadosConclusao, token);
+        await concluirVistoriaLocal({
+          id: vistoriaAtiva.id,
+          latitude: localizacao.latitude,
+          longitude: localizacao.longitude,
+          photoMimeType: mimeType,
+        });
+        Alert.alert(
+          "Vistoria concluída",
+          "A foto e a localização foram enviadas.",
+        );
+      } else {
+        await enfileirarConclusaoVistoria(dadosConclusao);
+        Alert.alert(
+          "Vistoria salva",
+          "A foto e a localização serão sincronizadas quando a conexão for restabelecida.",
+        );
+      }
+
       limparVistoriaAtiva();
       setFotoParaConfirmar(null);
-      Alert.alert("Vistoria concluída", "A foto e a localização foram enviadas.");
     } catch (error) {
       console.error("Não foi possível concluir a vistoria.", error);
       Alert.alert(

@@ -1,6 +1,7 @@
 import { Database } from "@nozbe/watermelondb";
 import SQLiteAdapter from "@nozbe/watermelondb/adapters/sqlite";
 
+import { ConclusaoPendenteModel } from "./models/ConclusaoPendente";
 import { DocumentoModel } from "./models/Documento";
 import { VistoriaModel } from "./models/Vistoria";
 import { migrations } from "./migrations";
@@ -18,5 +19,5 @@ const adapter = new SQLiteAdapter({
 
 export const database = new Database({
   adapter,
-  modelClasses: [DocumentoModel, VistoriaModel],
+  modelClasses: [ConclusaoPendenteModel, DocumentoModel, VistoriaModel],
 });
