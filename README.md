@@ -50,6 +50,14 @@ conexão, e encaminha chamadas por API Routes do Expo Router.
 6. Vistorias e documentos podem ser excluídos pelo portal após resposta
    positiva da API.
 
+### Fluxo mobile
+
+![Diagrama do fluxo mobile](https://github.com/user-attachments/assets/03c55a26-85df-45dc-b470-0409b3e45e64)
+
+### Fluxo web
+
+![Diagrama do fluxo web](https://github.com/user-attachments/assets/64859cca-7fa2-4d86-a51f-a973998ac800)
+
 ## Estratégia de sincronização e tratamento de conflitos
 
 O aplicativo mobile é offline-first para a conclusão de vistorias. Sem rede,
