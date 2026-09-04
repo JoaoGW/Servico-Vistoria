@@ -12,6 +12,8 @@ export interface Documento {
 
 interface DocumentoTableProps {
   documentos: Documento[]
+  documentoEmExclusao?: string
+  onDelete?: (id: string) => void
 }
 
 const formatarTipoArquivo = (fileMimeType: Documento['fileMimeType']) => (fileMimeType === 'application/pdf' ? 'PDF' : 'DOCX')
@@ -53,7 +55,7 @@ function FileTypeBadge({ fileMimeType }: Pick<Documento, 'fileMimeType'>) {
 /**
  * Apresenta uma lista estática de documentos para a composição visual da tela.
  */
-export default function DocumentosTable({ documentos }: DocumentoTableProps) {
+export default function DocumentosTable({ documentos, documentoEmExclusao, onDelete }: DocumentoTableProps) {
   const [documentoEmVisualizacao, setDocumentoEmVisualizacao] = useState<string>('')
   const [mensagemErro, setMensagemErro] = useState<string>('')
 
@@ -129,8 +131,8 @@ export default function DocumentosTable({ documentos }: DocumentoTableProps) {
                 <td className="whitespace-nowrap px-5 py-5 font-mono text-[#4B5C76] sm:px-6">{formatarData(documento.createdAt)}</td>
                 <td className="px-5 py-5 text-right sm:px-6">
                   <button
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-sm font-bold text-[#1E5BA8] transition-colors hover:bg-[#EAF3FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] disabled:cursor-wait disabled:opacity-60"
-                    disabled={documentoEmVisualizacao === documento.id}
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-sm font-bold text-[#1E5BA8] transition-colors hover:cursor-pointer hover:bg-[#EAF3FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5BA8] disabled:cursor-wait disabled:opacity-60"
+                    disabled={documentoEmVisualizacao === documento.id || documentoEmExclusao === documento.id}
                     onClick={() => void visualizarDocumento(documento.id)}
                     type="button"
                   >
@@ -140,6 +142,16 @@ export default function DocumentosTable({ documentos }: DocumentoTableProps) {
                     </svg>
                     {documentoEmVisualizacao === documento.id ? 'Abrindo...' : 'Visualizar'}
                   </button>
+                  {onDelete ? (
+                    <button
+                      className="ml-2 inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-bold text-[#C8353F] transition-colors hover:cursor-pointer hover:bg-[#FFF5F5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C8353F] disabled:cursor-wait disabled:opacity-60"
+                      disabled={documentoEmExclusao === documento.id || documentoEmVisualizacao === documento.id}
+                      onClick={() => onDelete(documento.id)}
+                      type="button"
+                    >
+                      {documentoEmExclusao === documento.id ? 'Excluindo...' : 'Excluir'}
+                    </button>
+                  ) : null}
                 </td>
               </tr>
             ))}

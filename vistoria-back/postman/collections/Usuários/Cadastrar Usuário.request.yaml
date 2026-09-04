@@ -1,13 +1,13 @@
 $kind: http-request
 name: Cadastrar Usuário
-url: "{{localhost}}/usuarios"
+url: http://localhost:3001/usuarios
 method: POST
 body:
   type: json
   content: |-
     {
-      "email": "desafio@peacore.com",
-      "password": "peacore123"
+      "email": "usuario@peacore.com",
+      "password": "desafioPeacoreVistoria"
     }
 scripts:
   - type: afterResponse

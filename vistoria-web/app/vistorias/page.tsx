@@ -38,7 +38,9 @@ const visualizarVistorias = async (token: string) => {
 export default function Vistorias() {
   const [vistorias, setVistorias] = useState<Vistoria[]>([])
   const [carregando, setCarregando] = useState<boolean>(true)
-  const [mensagemErro, setMensagemErro] = useState<string>('')
+  const [erroCarregamento, setErroCarregamento] = useState<string>('')
+  const [mensagemAcao, setMensagemAcao] = useState<string>('')
+  const [vistoriaEmExclusao, setVistoriaEmExclusao] = useState<string>('')
   const [filtroAtivo, setFiltroAtivo] = useState<FiltroStatus>('todas')
   const [busca, setBusca] = useState<string>('')
   const [sidebarRecolhida, setSidebarRecolhida] = useState<boolean>(false)
@@ -51,9 +53,40 @@ export default function Vistorias() {
 
     void requisicao
       .then((dados) => setVistorias(dados))
-      .catch((error: unknown) => setMensagemErro(error instanceof Error ? error.message : 'Não foi possível recuperar as vistorias.'))
+      .catch((error: unknown) => setErroCarregamento(error instanceof Error ? error.message : 'Não foi possível recuperar as vistorias.'))
       .finally(() => setCarregando(false))
   }, [])
+
+  const excluirVistoria = async (id: string) => {
+    const token = sessionStorage.getItem('accessToken')
+
+    if (!token) {
+      setMensagemAcao('Sua sessão não foi encontrada. Entre novamente para excluir a vistoria.')
+      return
+    }
+
+    setVistoriaEmExclusao(id)
+    setMensagemAcao('')
+
+    try {
+      const response = await fetch(`/api/vistorias/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Não foi possível excluir a vistoria.')
+      }
+
+      setVistorias((itens) => itens.filter((vistoria) => vistoria.id !== id))
+    } catch (error) {
+      setMensagemAcao(error instanceof Error ? error.message : 'Não foi possível excluir a vistoria.')
+    } finally {
+      setVistoriaEmExclusao('')
+    }
+  }
 
   const vistoriasFiltradas = useMemo(() => {
     const termo = busca.trim().toLocaleLowerCase('pt-BR')
@@ -150,16 +183,25 @@ export default function Vistorias() {
               </section>
             ) : null}
 
-            {mensagemErro ? (
-              <section className="mt-10 border-l-4 border-[#C8353F] bg-white px-6 py-5 text-[#7C252D] shadow-[0_8px_24px_rgba(30,39,74,0.06)]" role="alert">
+            {erroCarregamento ? (
+              <section className="mt-10 rounded-xl border border-[#F5B7B7] bg-[#FFF5F5] px-6 py-5 text-[#7C252D]" role="alert">
                 <p className="font-semibold">Não foi possível carregar as vistorias</p>
-                <p className="mt-1 text-sm leading-6">{mensagemErro}</p>
+                <p className="mt-1 text-sm leading-6">{erroCarregamento}</p>
               </section>
             ) : null}
 
-            {!carregando && !mensagemErro && vistoriasFiltradas.length ? <VistoriasTable vistorias={vistoriasFiltradas} /> : null}
+            {mensagemAcao ? (
+              <section className="mt-6 rounded-xl border border-[#F5B7B7] bg-[#FFF5F5] px-6 py-5 text-[#7C252D]" role="alert">
+                <p className="font-semibold">Não foi possível excluir a vistoria</p>
+                <p className="mt-1 text-sm leading-6">{mensagemAcao}</p>
+              </section>
+            ) : null}
 
-            {!carregando && !mensagemErro && !vistoriasFiltradas.length ? (
+            {!carregando && !erroCarregamento && vistoriasFiltradas.length ? (
+              <VistoriasTable onDelete={excluirVistoria} vistoriaEmExclusao={vistoriaEmExclusao} vistorias={vistoriasFiltradas} />
+            ) : null}
+
+            {!carregando && !erroCarregamento && !vistoriasFiltradas.length ? (
               <section className="mt-10 rounded-xl border border-[#DDE3ED] bg-white px-5 py-12 shadow-[0_8px_24px_rgba(30,39,74,0.06)] sm:px-6">
                 <p className="font-semibold text-[#1E274A]">Nenhuma vistoria encontrada</p>
                 <p className="mt-2 text-sm leading-6 text-[#687076]">

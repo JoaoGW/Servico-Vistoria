@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Body,
   Controller,
   Delete,
@@ -47,12 +48,14 @@ export class VistoriasController {
     @Body()
     body: {
       pendente?: string | boolean;
+      completedAt?: string;
       latitude?: string | number;
       longitude?: string | number;
     },
     @UploadedFile() photo?: ImagemVistoria,
   ) {
     const pendente = this.parsePendente(body.pendente);
+    const completedAt = this.parseCompletedAt(body.completedAt);
     const latitude = this.parseCoordenada(body.latitude, 'latitude', -90, 90);
     const longitude = this.parseCoordenada(
       body.longitude,
@@ -60,14 +63,19 @@ export class VistoriasController {
       -180,
       180,
     );
-    const recebeuLocalizacao = latitude !== undefined || longitude !== undefined;
+    const recebeuLocalizacao =
+      latitude !== undefined || longitude !== undefined;
 
     if (latitude === undefined && longitude !== undefined) {
-      throw new BadRequestException('Informe a latitude junto com a longitude.');
+      throw new BadRequestException(
+        'Informe a latitude junto com a longitude.',
+      );
     }
 
     if (latitude !== undefined && longitude === undefined) {
-      throw new BadRequestException('Informe a longitude junto com a latitude.');
+      throw new BadRequestException(
+        'Informe a longitude junto com a latitude.',
+      );
     }
 
     if (pendente === undefined && !recebeuLocalizacao && !photo) {
@@ -76,14 +84,41 @@ export class VistoriasController {
       );
     }
 
-    const data: UpdateVistoriaDto = { pendente, latitude, longitude };
-    const vistoria = await this.vistoriasService.update(id, data, photo);
+    if (pendente === false && !completedAt) {
+      throw new BadRequestException(
+        'Informe a data de conclusão ao concluir uma vistoria.',
+      );
+    }
 
-    if (!vistoria) {
+    if (pendente !== false && completedAt) {
+      throw new BadRequestException(
+        'A data de conclusão só pode ser enviada ao concluir uma vistoria.',
+      );
+    }
+
+    const data: UpdateVistoriaDto = {
+      pendente,
+      completedAt,
+      latitude,
+      longitude,
+    };
+    const resultado = await this.vistoriasService.update(id, data, photo);
+
+    if (resultado.tipo === 'nao_encontrada') {
       throw new NotFoundException('Vistoria não encontrada.');
     }
 
-    return vistoria;
+    if (resultado.tipo === 'conflito') {
+      throw new ConflictException({
+        code: 'INSPECTION_COMPLETION_CONFLICT',
+        message:
+          'A vistoria já possui uma conclusão anterior. Os dados da conclusão atual foram preservados.',
+        completedAt: resultado.vistoria.completedAt,
+        vistoria: resultado.vistoria,
+      });
+    }
+
+    return resultado.vistoria;
   }
 
   @Get(':id/foto')
@@ -119,6 +154,27 @@ export class VistoriasController {
     }
 
     throw new BadRequestException('O campo pendente deve ser true ou false.');
+  }
+
+  private parseCompletedAt(value: string | undefined) {
+    if (value === undefined) {
+      return undefined;
+    }
+
+    const iso8601ComFuso =
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:?\d{2})$/;
+
+    if (
+      !value ||
+      !iso8601ComFuso.test(value) ||
+      Number.isNaN(Date.parse(value))
+    ) {
+      throw new BadRequestException(
+        'A data de conclusão deve estar no formato ISO-8601.',
+      );
+    }
+
+    return new Date(value);
   }
 
   private parseCoordenada(

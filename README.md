@@ -1,28 +1,103 @@
 # Serviço de Vistoria
 
-Aplicação para cadastro, autenticação e gestão de vistorias e documentos. O
-repositório é um monorepo simples, composto por uma API REST em NestJS e uma
-aplicação web em Next.js.
+Monorepo para gestão de vistorias em campo. O sistema reúne uma API de domínio,
+um portal administrativo web e um aplicativo mobile: o portal cria e acompanha
+vistorias, o aplicativo registra a conclusão com foto e localização, e a API
+centraliza autenticação, dados e arquivos.
+
+## Sumário
+
+- [Arquitetura](#arquitetura)
+- [Fluxo de vistoria](#fluxo-de-vistoria)
+- [Estratégia de sincronização e tratamento de conflitos](#estratégia-de-sincronização-e-tratamento-de-conflitos)
+- [Pré-requisitos](#pré-requisitos)
+- [Configuração de ambiente](#configuração-de-ambiente)
+- [Instalação e primeira execução](#instalação-e-primeira-execução)
+- [Guia completo de execução](#guia-completo-de-execução)
+- [Rotas principais da API](#rotas-principais-da-api)
+- [Comandos de desenvolvimento](#comandos-de-desenvolvimento)
+- [Estrutura de dados e arquivos](#estrutura-de-dados-e-arquivos)
+- [Melhorias planejadas](#melhorias-planejadas)
+- [Segurança e limites conhecidos](#segurança-e-limites-conhecidos)
 
 ## Arquitetura
 
 | Diretório | Responsabilidade | Stack principal |
 | --- | --- | --- |
 | `vistoria-back/` | API REST, autenticação, persistência e upload de arquivos | NestJS, Drizzle ORM e PostgreSQL |
-| `vistoria-web/` | Interface web e rotas de proxy para autenticação | Next.js, React e Tailwind CSS |
+| `vistoria-web/` | Portal administrativo e rotas BFF para a API | Next.js, React, Tailwind CSS e Leaflet |
+| `vistoria-mobile/` | Operação em campo, captura e sincronização local | Expo, React Native e WatermelonDB/SQLite |
 
 O backend armazena imagens de vistorias e arquivos de documentos diretamente
 no PostgreSQL. A interface web chama as rotas internas do Next.js, que por sua
-vez se comunicam com a API configurada pela variável `APIS_URL`.
+vez se comunicam com a API configurada pela variável `APIS_URL`. O aplicativo
+mobile mantém uma cópia de trabalho local, com fila para conclusões feitas sem
+conexão, e chama a API Nest diretamente por uma URL pública configurada no bundle.
+
+## Fluxo de vistoria
+
+1. O portal web cria uma vistoria com descrição e status `pendente: true`.
+2. O aplicativo mobile sincroniza as vistorias pendentes para o banco local.
+3. Em campo, o técnico seleciona a vistoria, captura uma foto e registra a
+   localização atual.
+4. No clique de confirmação, o aplicativo captura `completedAt` e envia
+   `pendente: false`, a data, latitude, longitude e a foto no campo `photo`;
+   sem rede, os dados e o binário permanecem na fila local até a sincronização.
+   A menor `completedAt` vence mesmo que chegue posteriormente. A conclusão é
+   terminal: uma vistoria não volta a pendente.
+5. No portal, somente vistorias concluídas podem ser abertas em detalhes, com
+   dados registrados, foto autenticada e mapa Leaflet/OpenStreetMap.
+6. Vistorias e documentos podem ser excluídos pelo portal após resposta
+   positiva da API.
+
+### Fluxo mobile
+
+![Diagrama do fluxo mobile](https://github.com/user-attachments/assets/03c55a26-85df-45dc-b470-0409b3e45e64)
+
+### Fluxo web
+
+![Diagrama do fluxo web](https://github.com/user-attachments/assets/64859cca-7fa2-4d86-a51f-a973998ac800)
+
+## Estratégia de sincronização e tratamento de conflitos
+
+O aplicativo mobile é offline-first para a conclusão de vistorias. Sem rede,
+ele persiste no WatermelonDB/SQLite os dados da conclusão e uma cópia da foto
+em armazenamento persistente do dispositivo. A fila é processada em ordem
+crescente de `completedAt` ao recuperar a conectividade ou quando o usuário
+solicita a sincronização manualmente.
+
+`completedAt` é capturado no instante de confirmação da conclusão, antes de
+obter a localização, e acompanha tanto o envio online quanto a fila offline. A
+API aplica a atualização de forma atômica: se ainda não houver conclusão,
+aceita o registro; em concorrência, a menor marca de tempo vence. Em empate,
+vence a conclusão já persistida. A conclusão é terminal: uma vistoria concluída
+não pode voltar a pendente nem ter seus dados de conclusão substituídos por uma
+atualização posterior.
+
+Quando uma tentativa perde a disputa, a API responde `409` com o código
+`INSPECTION_COMPLETION_CONFLICT` e devolve a vistoria canônica. O mobile remove
+a pendência e a foto locais perdedoras, atualiza suas listas a partir da API e
+comunica o conflito ao usuário. Isso evita reenvios indefinidos e mantém uma
+única versão vencedora.
+
+## Guia completo de execução
+
+Consulte [HOW_TO_RUN.md](HOW_TO_RUN.md) para preparar um computador novo e
+executar o projeto por Docker ou localmente. O guia inclui configuração de
+ambiente, banco e schema, portal, aplicativo mobile, verificações, backup,
+troubleshooting e os limites da execução nativa do mobile.
 
 ## Pré-requisitos
 
 - Git 2.30 ou superior;
-- Node.js 20 LTS ou superior (Node 22+ é recomendado);
+- Node.js 24 LTS, a mesma versão de referência usada nas imagens Docker;
 - npm 10 ou superior;
 - PostgreSQL 14 ou superior, em execução e acessível localmente ou pela rede;
+- Android Studio/emulador Android ou Xcode/dispositivo iOS para o aplicativo
+  mobile;
 - acesso à internet para instalar dependências e para gerar o build do
-  frontend, que utiliza fontes hospedadas no Google Fonts.
+  frontend, que utiliza fontes hospedadas no Google Fonts e tiles do mapa pelo
+  OpenStreetMap.
 
 Confirme as versões instaladas:
 
@@ -95,9 +170,22 @@ APIS_URL=http://localhost:3001
 Não acrescente uma barra (`/`) ao final da URL. Em desenvolvimento local, a
 porta deve ser a mesma definida por `PORT` no backend.
 
+### Aplicativo mobile
+
+Crie `vistoria-mobile/.env.local` apontando para a API:
+
+```env
+EXPO_PUBLIC_API_URL=http://10.0.2.2:3001
+```
+
+O emulador Android acessa a máquina host em `10.0.2.2`. Em um dispositivo
+físico, `localhost` aponta para o próprio dispositivo: use o IP LAN do
+computador. Em produção, configure uma origem HTTPS pública da API Nest. A URL
+fica visível no aplicativo, portanto não inclua segredos nela.
+
 ## Instalação e primeira execução
 
-Abra dois terminais na raiz do projeto.
+Abra três terminais na raiz do projeto.
 
 ### Terminal 1 — API
 
@@ -130,6 +218,19 @@ npm run dev
 
 Abra [http://localhost:3000](http://localhost:3000) no navegador. O Next.js
 recarrega a página automaticamente quando os arquivos do frontend são alterados.
+
+### Terminal 3 — aplicativo mobile
+
+Instale as dependências e inicie o Expo:
+
+```bash
+cd vistoria-mobile
+npm ci
+npm run start
+```
+
+Use o Expo CLI para abrir o aplicativo no emulador, simulador ou development
+build. Os atalhos `npm run android` e `npm run ios` iniciam os fluxos nativos.
 
 ## Verificação da instalação
 
@@ -169,7 +270,8 @@ As coleções de requisições para Postman estão em
 | `POST` | `/usuarios/login` | Pública | Autentica usuário e retorna JWT |
 | `GET` | `/usuarios` | JWT | Lista usuários |
 | `GET` | `/vistorias` | JWT | Lista vistorias |
-| `POST` | `/vistorias` | JWT | Cria vistoria com imagem no campo `photo` |
+| `POST` | `/vistorias` | JWT | Cria vistoria pendente com `userId` e `description` |
+| `PUT` | `/vistorias/:id` | JWT | Conclui vistoria com foto, coordenadas e `completedAt` ISO-8601 |
 | `GET` | `/vistorias/:id/foto` | JWT | Exibe a imagem de uma vistoria |
 | `DELETE` | `/vistorias/:id` | JWT | Remove uma vistoria |
 | `GET` | `/documentos` | JWT | Lista documentos |
@@ -178,9 +280,33 @@ As coleções de requisições para Postman estão em
 | `GET` | `/documentos/:id/arquivo` | JWT | Baixa o arquivo do documento |
 | `DELETE` | `/documentos/:id` | JWT | Remove um documento |
 
-O envio de vistoria deve usar `multipart/form-data`, aceitar um arquivo de
-imagem e respeitar o limite de 10 MB. Documentos devem ser PDF ou DOCX, no
-campo `file`, com limite de 25 MB.
+O cadastro de vistoria usa JSON; sua conclusão usa `multipart/form-data` e
+exige `pendente: false`, `completedAt` em ISO-8601, latitude, longitude e uma
+imagem no campo `photo`. Latitude e longitude devem ser enviadas juntas, e a
+imagem tem limite de 10 MB. A API persiste `completedAt` em `concluido_em` e o
+retorna em todas as leituras. Em conflito, devolve `409` com o código
+`INSPECTION_COMPLETION_CONFLICT` e os dados vencedores. A listagem devolve os
+metadados, inclusive `photoMimeType`, mas não o binário da foto; ele é
+recuperado por `GET /vistorias/:id/foto`.
+
+Documentos devem ser PDF ou DOCX, enviados no campo `file`, com limite de
+10 MB. A atualização usa `PUT /documentos` com o identificador no corpo
+multipart.
+
+### Rotas internas do portal web
+
+O portal web usa rotas internas como BFF e encaminha o cabeçalho Bearer para a
+API de domínio. Além das rotas de login, listagem e upload, os fluxos de
+detalhes e exclusão usam:
+
+| Método | Rota do portal | Destino na API |
+| --- | --- | --- |
+| `GET` | `/api/vistorias/:id/foto` | `/vistorias/:id/foto` |
+| `DELETE` | `/api/vistorias/:id` | `/vistorias/:id` |
+| `DELETE` | `/api/documentos/:id` | `/documentos/:id` |
+
+O endpoint de foto preserva o fluxo de bytes e os cabeçalhos retornados pela
+API externa, permitindo a exibição autenticada da evidência no navegador.
 
 ## Comandos de desenvolvimento
 
@@ -209,16 +335,33 @@ Para testar o frontend em modo de produção, execute `npm run build` antes de
 `npm run start`. O build depende de acesso a `fonts.googleapis.com`, pois o
 layout atual usa as fontes Geist por meio de `next/font/google`.
 
+### Aplicativo mobile
+
+```bash
+cd vistoria-mobile
+npm run start        # inicia o Expo
+npm run android      # abre no Android
+npm run ios          # abre no iOS
+npm run lint         # executa o Expo lint
+```
+
+Para gerar builds locais ou em nuvem, consulte os scripts `build:android:*` e
+`build:ios:*` em `vistoria-mobile/package.json`.
+
 ## Estrutura de dados e arquivos
 
 - `usuarios`: endereço de e-mail, hash de senha e datas de auditoria;
-- `vistorias`: usuário responsável, descrição, coordenadas, status pendente e
-  imagem da vistoria;
+- `vistorias`: usuário responsável, descrição, coordenadas, status pendente,
+  `concluido_em`, tipo MIME e imagem da vistoria;
 - `documentos`: título, nome, tipo MIME e conteúdo binário de arquivos PDF ou
   DOCX.
 
 Arquivos enviados são persistidos no banco em colunas binárias. Por isso, o
 tamanho do banco e os backups devem ser planejados considerando os anexos.
+
+No aplicativo mobile, vistorias, documentos e conclusões pendentes também são
+mantidos no WatermelonDB/SQLite. Fotos aguardando sincronização são copiadas
+para armazenamento persistente do dispositivo antes do reenvio.
 
 ## Boas práticas para colaboração
 
@@ -230,17 +373,72 @@ tamanho do banco e os backups devem ser planejados considerando os anexos.
 - Não aplique `drizzle-kit push` sem revisão em banco compartilhado ou de
   produção.
 - Mantenha backend e frontend em processos separados durante o desenvolvimento.
+- Valide no mobile as permissões de câmera e localização, a conclusão online e
+  a retomada da fila após recuperar a conexão.
 
 ## Estado atual validado
 
-Na revisão desta documentação, o build, os testes e o lint do backend foram
-executados com sucesso. A suíte não contém arquivos de teste no momento. O
-build do frontend depende de conectividade com Google Fonts; em ambiente sem
-internet ou bloqueado por proxy, ele falhará até que as fontes sejam
-auto-hospedadas ou a conectividade seja liberada.
+O backend possui comandos de build, lint e Vitest; os clientes ainda dependem
+principalmente de validação manual dos fluxos de autenticação, sincronização e
+arquivos. O build do frontend depende de conectividade com Google Fonts; em
+ambiente sem internet ou bloqueado por proxy, ele falhará até que as fontes
+sejam auto-hospedadas ou a conectividade seja liberada.
 
 O lint do frontend atualmente falha em arquivos do diretório
 `vistoria-web/Design/GlueStackUI Pro/`, que reúne um kit de componentes e
 templates. Há erros preexistentes de tipagem, imports com `require`, regras de
 hooks e variáveis não usadas nesse material. Esse resultado deve ser tratado
-antes de tornar o lint uma etapa obrigatória de CI.
+antes de tornar o lint uma etapa obrigatória de CI. Para validar apenas o
+portal mantido, execute `npx eslint app components utils` em `vistoria-web/`.
+
+## Melhorias planejadas
+
+- Substituir o uso de `drizzle-kit push` fora do desenvolvimento por migrações
+  versionadas, revisadas e aplicadas por pipeline, com backup e plano de
+  reversão para cada alteração de schema.
+- Cobrir autenticação, upload, conclusão de vistoria e conflito `409` com
+  testes de unidade, integração e ponta a ponta; tornar lint, build e testes
+  verificações obrigatórias no CI.
+- Implantar health checks de negócio, logs estruturados, métricas, rastreamento
+  de erros e alertas para API, banco, uploads e fila de sincronização.
+- Mover fotos e documentos de colunas binárias do PostgreSQL para
+  armazenamento de objetos com checksum, varredura antimalware, retenção e
+  backup apropriados.
+- Evoluir a autenticação para cookie `HttpOnly` no portal e armazenamento
+  seguro no mobile, com expiração consistente do token e autorização por
+  recurso no backend.
+- Proteger as rotas web no servidor e validar a assinatura do JWT na camada
+  BFF, em vez de apenas extrair o identificador do payload.
+- Auto-hospedar as fontes do portal e corrigir o material de referência que
+  hoje impede o lint global do frontend.
+- Evoluir a sincronização mobile com `operationId`, versão por entidade, cursor
+  incremental, retentativa persistente e telemetria, preservando a regra de
+  menor `completedAt` e a conclusão terminal.
+- Publicar a API Nest em HTTPS para builds nativos e testar permissões, fila
+  offline e recuperação após interrupção de rede em dispositivos reais.
+
+## Segurança e limites conhecidos
+
+- O portal usa `sessionStorage` e o aplicativo usa `AsyncStorage` para o token.
+  Para produção, use cookie `HttpOnly` no web e armazenamento seguro no mobile.
+- A autorização por recurso deve continuar sendo validada pela API. As regras
+  de interface, como bloquear detalhes de vistorias pendentes, não substituem
+  essa verificação no servidor.
+- Foto, localização e documentos podem conter dados pessoais. Defina retenção,
+  acesso mínimo, auditoria, backup e exclusão conforme a política aplicável.
+- A fila offline mobile ainda não possui identificador idempotente,
+  versionamento por entidade ou cursor incremental. O conflito de conclusão de
+  vistoria possui a regra específica baseada em `completedAt`; os demais fluxos
+  ainda não contam com um protocolo genérico de resolução de conflitos.
+- O mapa do portal usa tiles públicos do OpenStreetMap; respeite a política do
+  provedor e avalie um provedor próprio para produção em maior escala.
+
+## Documentação complementar
+
+- [Guia completo de execução](HOW_TO_RUN.md)
+- [API de domínio](vistoria-back/README.md)
+- [Portal web](vistoria-web/README.md)
+- [Contratos de integração web](vistoria-web/docs/REQUISICOES_API.md)
+- [Arquitetura offline-first do portal](vistoria-web/docs/ARQUITETURA.md)
+- [Aplicativo mobile](vistoria-mobile/README.md)
+- [Arquitetura mobile offline-first](vistoria-mobile/docs/ARQUITETURA.md)

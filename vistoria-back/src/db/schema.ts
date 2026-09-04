@@ -42,6 +42,10 @@ export const vistorias = pgTable("vistorias", {
   latitude: doublePrecision("latitude"), // Localização registrada pelo aplicativo mobile
   longitude: doublePrecision("longitude"),
   pendente: boolean("pendente").notNull().default(true), // Toda vistoria começa pendente
+  completedAt: timestamp("concluido_em", {
+    withTimezone: true,
+    mode: "date",
+  }),
   createdAt: timestamp("data_criacao", { // Usado pela API para comparar qual versão é a mais recente
     withTimezone: true,
     mode: "date",
