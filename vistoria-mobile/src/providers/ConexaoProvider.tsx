@@ -24,6 +24,11 @@ interface IConexaoContexto {
 
 const ConexaoContexto = createContext<IConexaoContexto | null>(null);
 
+/**
+ * Converte o estado da rede no estado de conexão usado pela aplicação.
+ * @param estadoDaRede - Estado atual informado pelo Expo Network.
+ * @returns Retorna se a conexão está online ou offline.
+ */
 function obterEstadoConexao(estadoDaRede: Network.NetworkState): EstadoConexao {
   if (
     estadoDaRede.isConnected === true &&
@@ -35,6 +40,11 @@ function obterEstadoConexao(estadoDaRede: Network.NetworkState): EstadoConexao {
   return "offline";
 }
 
+/**
+ * Disponibiliza o estado de conexão e a sincronização para a aplicação.
+ * @param props - Propriedades que contêm os componentes filhos do provedor.
+ * @returns Retorna o provedor, os filhos e os feedbacks de sincronização.
+ */
 export function ProvedorConexao({ children }: PropsWithChildren) {
   const [estadoConexao, setEstadoConexao] =
     useState<EstadoConexao>("verificando");
@@ -45,6 +55,10 @@ export function ProvedorConexao({ children }: PropsWithChildren) {
   const sincronizacaoEmAndamento = useRef(false);
   const estadoAnterior = useRef<EstadoConexao | null>(null);
 
+  /**
+   * Sincroniza os dados locais, evitando execuções concorrentes.
+   * @returns Conclui quando a sincronização terminar ou já estiver em andamento.
+   */
   const executarSincronizacao = useCallback(async () => {
     if (sincronizacaoEmAndamento.current) {
       return;
@@ -72,6 +86,11 @@ export function ProvedorConexao({ children }: PropsWithChildren) {
   useEffect(() => {
     let estaAtivo = true;
 
+    /**
+     * Atualiza a conexão e sincroniza ao recuperar o acesso à internet.
+     * @param estadoDaRede - Estado de rede recebido do Expo Network.
+     * @returns Não retorna valor.
+     */
     const atualizarConexao = (estadoDaRede: Network.NetworkState) => {
       if (!estaAtivo) {
         return;
@@ -106,6 +125,10 @@ export function ProvedorConexao({ children }: PropsWithChildren) {
     };
   }, [executarSincronizacao]);
 
+  /**
+   * Solicita a sincronização manual quando há conexão com a internet.
+   * @returns Conclui após sincronizar ou quando não houver conexão.
+   */
   const sincronizarAgora = useCallback(async () => {
     if (estadoConexao !== "online") {
       return;
@@ -141,6 +164,11 @@ export function ProvedorConexao({ children }: PropsWithChildren) {
   );
 }
 
+/**
+ * Obtém o estado de conexão e a ação de sincronização do contexto.
+ * @returns Retorna os dados e ações disponibilizados pelo ProvedorConexao.
+ * @throws Retorna erro quando usado fora do ProvedorConexao.
+ */
 export function useConexao() {
   const contexto = useContext(ConexaoContexto);
 

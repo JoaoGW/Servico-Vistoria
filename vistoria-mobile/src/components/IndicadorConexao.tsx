@@ -4,6 +4,10 @@ import { useConexao } from "@/providers/ConexaoProvider";
 
 import { Wifi, WifiOff } from "lucide-react-native";
 
+/**
+ * Exibe um ícone que indica o estado atual da conexão com a internet.
+ * @returns Retorna o indicador visual de conexão ou desconexão.
+ */
 export function IndicadorConexao() {
   const { estadoConexao } = useConexao();
   const estaOffline = estadoConexao === "offline";

@@ -14,6 +14,11 @@ interface SuccessModalProps {
   onClose: () => void;
 }
 
+/**
+ * Exibe uma confirmação de sucesso e uma ação para fechar o modal.
+ * @param props - Título, mensagem, rótulo e ação de fechamento.
+ * @returns Retorna o modal de feedback de sucesso.
+ */
 export default function SuccessModal({
   actionLabel,
   message,

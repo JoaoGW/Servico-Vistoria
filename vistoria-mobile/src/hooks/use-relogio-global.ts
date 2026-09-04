@@ -7,6 +7,10 @@ interface IRespostaHorarioGlobal {
 
 const URL_HORARIO_GLOBAL = 'https://worldtimeapi.org/api/ip'
 
+/**
+ * Mantém a data e o horário atualizados com base no horário global.
+ * @returns Retorna a data e o horário formatados para exibição.
+ */
 export function useRelogioGlobal() {
   const diferencaDeHorario = useRef(0)
   const fusoHorario = useRef<string | undefined>(undefined)
@@ -15,12 +19,20 @@ export function useRelogioGlobal() {
   useEffect(() => {
     let estaMontado = true
 
+    /**
+     * Atualiza o horário exibido aplicando a diferença em relação ao servidor.
+     * @returns Não retorna valor.
+     */
     const atualizarHorario = () => {
       if (estaMontado) {
         setAgora(new Date(Date.now() + diferencaDeHorario.current))
       }
     }
 
+    /**
+     * Busca o horário global para corrigir o relógio local do dispositivo.
+     * @returns Conclui com a diferença atualizada ou mantém o horário local.
+     */
     const buscarHorarioGlobal = async () => {
       try {
         const resposta = await fetch(URL_HORARIO_GLOBAL)

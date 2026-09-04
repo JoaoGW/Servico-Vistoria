@@ -14,6 +14,11 @@ interface ICampoLoginProps {
   setValue: (value: string) => void;
 }
 
+/**
+ * Exibe um campo de e-mail ou senha para o formulário de autenticação.
+ * @param props - Rótulo, valor, ícone e função de atualização do campo.
+ * @returns Retorna o campo de entrada configurado.
+ */
 export function CampoLogin({
   icone,
   label,

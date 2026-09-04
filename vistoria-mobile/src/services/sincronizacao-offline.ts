@@ -21,6 +21,12 @@ export interface IDadosConclusaoVistoria {
   longitude: number;
 }
 
+/**
+ * Obtém a extensão da foto a partir do nome ou do seu tipo MIME.
+ * @param nome - Nome original do arquivo de foto.
+ * @param mimeType - Tipo MIME informado para a foto.
+ * @returns Retorna a extensão identificada ou um padrão de imagem.
+ */
 function obterExtensaoArquivo(nome: string, mimeType: string) {
   const extensao = nome.match(/\.[a-zA-Z0-9]+$/)?.[0];
 
@@ -31,6 +37,11 @@ function obterExtensaoArquivo(nome: string, mimeType: string) {
   return mimeType === "image/png" ? ".png" : ".jpg";
 }
 
+/**
+ * Gera um nome seguro e único para armazenar uma foto pendente.
+ * @param dadosConclusao - Dados da conclusão que identificam a foto.
+ * @returns Retorna o nome que será usado no armazenamento local.
+ */
 function obterNomePersistenteArquivo({
   fotoMimeType,
   fotoNome,
@@ -42,6 +53,12 @@ function obterNomePersistenteArquivo({
   return `${idSeguro}-${identificador}${obterExtensaoArquivo(fotoNome, fotoMimeType)}`;
 }
 
+/**
+ * Extrai a mensagem de erro retornada pela API ou usa um texto padrão.
+ * @param response - Resposta recebida da requisição com falha.
+ * @param mensagemPadrao - Mensagem usada quando a API não detalhar o erro.
+ * @returns Retorna a mensagem que deve ser exibida ao usuário.
+ */
 async function obterMensagemDeErro(response: Response, mensagemPadrao: string) {
   const respostaErro = (await response.json().catch(() => null)) as {
     error?: string;
@@ -50,6 +67,12 @@ async function obterMensagemDeErro(response: Response, mensagemPadrao: string) {
   return respostaErro?.error ?? mensagemPadrao;
 }
 
+/**
+ * Busca as vistorias disponíveis para o usuário autenticado.
+ * @param token - Token de acesso usado na autorização da requisição.
+ * @returns Retorna a lista de vistorias recebida da API.
+ * @throws Retorna erro quando a API não puder recuperar as vistorias.
+ */
 async function buscarVistorias(token: string) {
   const response = await fetch("/api/vistorias/verVistorias", {
     method: "GET",
@@ -65,6 +88,12 @@ async function buscarVistorias(token: string) {
   return response.json() as Promise<VistoriaApi[]>;
 }
 
+/**
+ * Busca os documentos disponíveis para o usuário autenticado.
+ * @param token - Token de acesso usado na autorização da requisição.
+ * @returns Retorna a lista de documentos recebida da API.
+ * @throws Retorna erro quando a API não puder recuperar os documentos.
+ */
 async function buscarDocumentos(token: string) {
   const response = await fetch("/api/documentos/recuperarDocumentos", {
     method: "GET",
@@ -80,6 +109,13 @@ async function buscarDocumentos(token: string) {
   return response.json() as Promise<DocumentoApi[]>;
 }
 
+/**
+ * Envia à API a foto e a localização que concluem uma vistoria.
+ * @param dadosConclusao - Dados da foto, localização e vistoria concluída.
+ * @param token - Token de acesso usado na autorização da requisição.
+ * @returns Conclui quando a API confirmar o envio da conclusão.
+ * @throws Retorna erro quando o arquivo não puder ser lido ou a API falhar.
+ */
 export async function enviarConclusaoVistoria(
   dadosConclusao: IDadosConclusaoVistoria,
   token: string,
@@ -117,6 +153,12 @@ export async function enviarConclusaoVistoria(
   }
 }
 
+/**
+ * Persiste a foto e a conclusão de uma vistoria para envio posterior.
+ * @param dadosConclusao - Dados da vistoria concluída sem conexão.
+ * @returns Conclui após copiar a foto e criar a pendência local.
+ * @throws Retorna erro quando a foto não existir ou a fila local falhar.
+ */
 export async function enfileirarConclusaoVistoria(
   dadosConclusao: IDadosConclusaoVistoria,
 ) {
@@ -158,6 +200,11 @@ export async function enfileirarConclusaoVistoria(
   }
 }
 
+/**
+ * Envia conclusões pendentes e atualiza os dados locais com a API.
+ * @returns Conclui após sincronizar as pendências, vistorias e documentos.
+ * @throws Retorna erro quando a sessão, os arquivos locais ou a API falharem.
+ */
 export async function sincronizarDadosComApi() {
   const conclusoesPendentes = await listarConclusoesPendentes();
   const token = await AsyncStorage.getItem("accessToken");

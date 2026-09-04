@@ -14,6 +14,11 @@ interface ErrorModalProps {
   onRetry?: () => void;
 }
 
+/**
+ * Exibe uma mensagem de erro com opções para fechar ou tentar novamente.
+ * @param props - Título, mensagem e ações disponíveis para o erro.
+ * @returns Retorna o modal de feedback de erro.
+ */
 export default function ErrorModal({
   message,
   onClose,

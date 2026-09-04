@@ -18,12 +18,10 @@ interface Autenticacao {
 }
 
 /**
- * Responsável por chamar a rota de autenticação do portal.
- *
- * @param email - E-mail informado pelo usuário.
- * @param senha - Senha informada pelo usuário.
- * @returns Retorna o token de acesso disponibilizado pela API.
- * @throws Will throw an error if the request fails or the response is not successful.
+ * Autentica o usuário na rota de login do portal.
+ * @param dados - E-mail e senha informados pelo usuário.
+ * @returns Retorna os dados de acesso disponibilizados pela API.
+ * @throws Retorna erro quando a autenticação ou a requisição falhar.
  */
 export const login = async ({ email, senha }: Autenticacao) => {
   try {
@@ -57,6 +55,10 @@ export const login = async ({ email, senha }: Autenticacao) => {
   }
 };
 
+/**
+ * Exibe o formulário de login e verifica uma sessão salva ao iniciar.
+ * @returns Retorna o formulário e o modal de erro quando necessário.
+ */
 export function FormularioLogin() {
   const [email, setEmail] = useState<Autenticacao["email"]>("");
   const [senha, setSenha] = useState<Autenticacao["senha"]>("");
@@ -68,6 +70,10 @@ export function FormularioLogin() {
   useEffect(() => {
     let estaMontado = true;
 
+    /**
+     * Verifica se existe um token salvo e redireciona para a tela inicial.
+     * @returns Conclui após verificar o armazenamento local.
+     */
     const verificarTokenSalvo = async () => {
       try {
         const token = await AsyncStorage.getItem("accessToken");

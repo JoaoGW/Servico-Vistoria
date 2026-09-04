@@ -7,6 +7,11 @@ interface IModalSincronizacaoProps {
   visivel: boolean;
 }
 
+/**
+ * Exibe o progresso enquanto vistorias e documentos são sincronizados.
+ * @param props - Define se o modal de sincronização está visível.
+ * @returns Retorna o modal de progresso da sincronização.
+ */
 export function ModalSincronizacao({ visivel }: IModalSincronizacaoProps) {
   return (
     <Modal

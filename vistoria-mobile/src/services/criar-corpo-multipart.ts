@@ -12,10 +12,20 @@ interface ICriarCorpoMultipartProps {
   campos: Record<string, string>;
 }
 
+/**
+ * Remove caracteres inválidos de valores usados nos cabeçalhos multipart.
+ * @param valor - Texto que será usado em um cabeçalho multipart.
+ * @returns Retorna o texto seguro para incluir no cabeçalho.
+ */
 function escaparCabecalho(valor: string) {
   return valor.replace(/["\r\n]/g, "_");
 }
 
+/**
+ * Une partes binárias em um único corpo de requisição.
+ * @param partes - Trechos codificados que compõem o corpo multipart.
+ * @returns Retorna o conteúdo binário resultante.
+ */
 function juntarPartes(partes: Uint8Array[]) {
   const tamanho = partes.reduce((total, parte) => total + parte.length, 0);
   const corpo = new Uint8Array(tamanho);
@@ -29,7 +39,12 @@ function juntarPartes(partes: Uint8Array[]) {
   return corpo;
 }
 
-/** Cria um corpo multipart binário compatível com o fetch nativo do Expo. */
+/**
+ * Cria um corpo multipart binário compatível com o fetch nativo do Expo.
+ * @param dados - Arquivo e campos textuais que serão enviados na requisição.
+ * @returns Retorna o corpo binário e seu cabeçalho Content-Type.
+ * @throws Retorna erro quando o arquivo não puder ser lido.
+ */
 export async function criarCorpoMultipart({
   arquivo,
   campos,
